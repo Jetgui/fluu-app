@@ -2767,6 +2767,108 @@ function toggleCollapse(bodyId, btnId) {
     initActions();
   }
 }());
+
+// ── EXPONER TODAS LAS FUNCIONES AL SCOPE GLOBAL ──
+// Necesario para que onclick las encuentre
+(function() {
+  window.saveAll = saveAll;
+  window.toNum = toNum;
+  window.normalizarProducto = normalizarProducto;
+  window.normalizarMovimiento = normalizarMovimiento;
+  window.normalizarPrestamo = normalizarPrestamo;
+  window.migrarBodegas = migrarBodegas;
+  window.getStock = getStock;
+  window.totalPaquetes = totalPaquetes;
+  window.totalSobres = totalSobres;
+  window.getStockStatus = getStockStatus;
+  window.stockBarHTML = stockBarHTML;
+  window.gid = gid;
+  window.toast = toast;
+  window.fmt = fmt;
+  window.fmtDate = fmtDate;
+  window.showConfirm = showConfirm;
+  window.closeConfirm = closeConfirm;
+  window.doConfirm = doConfirm;
+  window.confirmOverlayClick = confirmOverlayClick;
+  window.toggleTheme = toggleTheme;
+  window.toggleDrawer = toggleDrawer;
+  window.openDrawer = openDrawer;
+  window.closeDrawer = closeDrawer;
+  window.goTo = goTo;
+  window.refreshPage = refreshPage;
+  window.actualizarHintCosto = actualizarHintCosto;
+  window.agregarProducto = agregarProducto;
+  window.renderProductosList = renderProductosList;
+  window.editarProducto = editarProducto;
+  window.eliminarProducto = eliminarProducto;
+  window.populateSelects = populateSelects;
+  window.getStatus = getStatus;
+  window.toggleSortInventory = toggleSortInventory;
+  window.buildPrestadosMap = buildPrestadosMap;
+  window.renderInventory = renderInventory;
+  window.irASalida = irASalida;
+  window.irATraslado = irATraslado;
+  window.renderDashboard = renderDashboard;
+  window.toggleEntradaTipo = toggleEntradaTipo;
+  window.toggleEntradaBodega = toggleEntradaBodega;
+  window.agregarEntradaCola = agregarEntradaCola;
+  window.renderColaEntradas = renderColaEntradas;
+  window.confirmarEntradas = confirmarEntradas;
+  window.renderEnCamino = renderEnCamino;
+  window.abrirEditPedido = abrirEditPedido;
+  window.cerrarEditCamino = cerrarEditCamino;
+  window.guardarEditCamino = guardarEditCamino;
+  window.eliminarPedidoCamino = eliminarPedidoCamino;
+  window.marcarPedidoRecibido = marcarPedidoRecibido;
+  window.updateSalidaInfo = updateSalidaInfo;
+  window.actualizarPreviewGanancia = actualizarPreviewGanancia;
+  window.agregarAlCarrito = agregarAlCarrito;
+  window.renderCarrito = renderCarrito;
+  window.confirmarVenta = confirmarVenta;
+  window.histItemHTML = histItemHTML;
+  window.editarMovimiento = editarMovimiento;
+  window.guardarEdicion = guardarEdicion;
+  window.closeEdit = closeEdit;
+  window.editOverlayClick = editOverlayClick;
+  window.eliminarMovimiento = eliminarMovimiento;
+  window.renderHistorial = renderHistorial;
+  window.verDetalleMovimiento = verDetalleMovimiento;
+  window.closeDetail = closeDetail;
+  window.detailOverlayClick = detailOverlayClick;
+  window.exportarHistorial = exportarHistorial;
+  window.setRango = setRango;
+  window.calcGanancias = calcGanancias;
+  window.initGastoFecha = initGastoFecha;
+  window.registrarGasto = registrarGasto;
+  window.eliminarGasto = eliminarGasto;
+  window.renderGastosList = renderGastosList;
+  window.populateTrasladoSelects = populateTrasladoSelects;
+  window.updateTrasladoInfo = updateTrasladoInfo;
+  window.ejecutarTraslado = ejecutarTraslado;
+  window.renderBodegasPage = renderBodegasPage;
+  window.mostrarFormBodega = mostrarFormBodega;
+  window.editarBodega = editarBodega;
+  window.cancelarBodega = cancelarBodega;
+  window.guardarBodega = guardarBodega;
+  window.eliminarBodega = eliminarBodega;
+  window.toggleTrasladosCard = toggleTrasladosCard;
+  window.togglePrestamosCard = togglePrestamosCard;
+  window.toggleStockCard = toggleStockCard;
+  window.renderTrasladosList = renderTrasladosList;
+  window.calcSaldoPrestamo = calcSaldoPrestamo;
+  window.renderPrestamosList = renderPrestamosList;
+  window.abrirNuevoPrestamoModal = abrirNuevoPrestamoModal;
+  window.cerrarNuevoPrestamoModal = cerrarNuevoPrestamoModal;
+  window.npUpdateInfo = npUpdateInfo;
+  window.confirmarNuevoPrestamo = confirmarNuevoPrestamo;
+  window.abrirAbonarModal = abrirAbonarModal;
+  window.actualizarAbonarHint = actualizarAbonarHint;
+  window.cerrarAbonarModal = cerrarAbonarModal;
+  window.confirmarAbonar = confirmarAbonar;
+  window.eliminarFichaPrestamo = eliminarFichaPrestamo;
+  window.toggleCollapse = toggleCollapse;
+})();
+
 </script>
 </body>
 </html>
