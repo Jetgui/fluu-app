@@ -1115,8 +1115,6 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
 </script>
 
 <script>
-'use strict';
-
 // ═══════════════════════════════════════════
 // ESTADO GLOBAL
 // ═══════════════════════════════════════════
@@ -2687,144 +2685,7 @@ function toggleCollapse(bodyId, btnId) {
 
 // ═══════════════════════════════════════════
 
-// ── EXPONER AL SCOPE GLOBAL (necesario para onclick) ──
-window.goTo = goTo;
-window.toggleDrawer = toggleDrawer;
-window.openDrawer = openDrawer;
-window.closeDrawer = closeDrawer;
-window.toggleTheme = toggleTheme;
-window.toggleSortInventory = toggleSortInventory;
-window.agregarProducto = agregarProducto;
-window.renderProductosList = renderProductosList;
-window.editarProducto = editarProducto;
-window.eliminarProducto = eliminarProducto;
-window.populateSelects = populateSelects;
-window.renderInventory = renderInventory;
-window.irASalida = irASalida;
-window.irATraslado = irATraslado;
-window.renderDashboard = renderDashboard;
-window.toggleEntradaTipo = toggleEntradaTipo;
-window.toggleEntradaBodega = toggleEntradaBodega;
-window.agregarEntradaCola = agregarEntradaCola;
-window.renderColaEntradas = renderColaEntradas;
-window.confirmarEntradas = confirmarEntradas;
-window.renderEnCamino = renderEnCamino;
-window.abrirEditPedido = abrirEditPedido;
-window.cerrarEditCamino = cerrarEditCamino;
-window.guardarEditCamino = guardarEditCamino;
-window.eliminarPedidoCamino = eliminarPedidoCamino;
-window.marcarPedidoRecibido = marcarPedidoRecibido;
-window.updateSalidaInfo = updateSalidaInfo;
-window.actualizarPreviewGanancia = actualizarPreviewGanancia;
-window.agregarAlCarrito = agregarAlCarrito;
-window.renderCarrito = renderCarrito;
-window.confirmarVenta = confirmarVenta;
-window.editarMovimiento = editarMovimiento;
-window.guardarEdicion = guardarEdicion;
-window.closeEdit = closeEdit;
-window.editOverlayClick = editOverlayClick;
-window.eliminarMovimiento = eliminarMovimiento;
-window.renderHistorial = renderHistorial;
-window.verDetalleMovimiento = verDetalleMovimiento;
-window.closeDetail = closeDetail;
-window.detailOverlayClick = detailOverlayClick;
-window.exportarHistorial = exportarHistorial;
-window.setRango = setRango;
-window.calcGanancias = calcGanancias;
-window.initGastoFecha = initGastoFecha;
-window.registrarGasto = registrarGasto;
-window.eliminarGasto = eliminarGasto;
-window.renderGastosList = renderGastosList;
-window.populateTrasladoSelects = populateTrasladoSelects;
-window.updateTrasladoInfo = updateTrasladoInfo;
-window.ejecutarTraslado = ejecutarTraslado;
-window.renderBodegasPage = renderBodegasPage;
-window.mostrarFormBodega = mostrarFormBodega;
-window.editarBodega = editarBodega;
-window.cancelarBodega = cancelarBodega;
-window.guardarBodega = guardarBodega;
-window.eliminarBodega = eliminarBodega;
-window.toggleTrasladosCard = toggleTrasladosCard;
-window.togglePrestamosCard = togglePrestamosCard;
-window.toggleStockCard = toggleStockCard;
-window.renderTrasladosList = renderTrasladosList;
-window.calcSaldoPrestamo = calcSaldoPrestamo;
-window.renderPrestamosList = renderPrestamosList;
-window.abrirNuevoPrestamoModal = abrirNuevoPrestamoModal;
-window.cerrarNuevoPrestamoModal = cerrarNuevoPrestamoModal;
-window.npUpdateInfo = npUpdateInfo;
-window.confirmarNuevoPrestamo = confirmarNuevoPrestamo;
-window.abrirAbonarModal = abrirAbonarModal;
-window.cerrarAbonarModal = cerrarAbonarModal;
-window.confirmarAbonar = confirmarAbonar;
-window.eliminarFichaPrestamo = eliminarFichaPrestamo;
-window.toggleCollapse = toggleCollapse;
-window.showConfirm = showConfirm;
-window.closeConfirm = closeConfirm;
-window.doConfirm = doConfirm;
-window.toast = toast;
-window.fmt = fmt;
-window.fmtDate = fmtDate;
-window.gid = gid;
-window.saveAll = saveAll;
-window.actualizarHintCosto = actualizarHintCosto;
-window.checkRegalosDisponibles = checkRegalosDisponibles;
-window.doLogin = doLogin;
-window.doLogout = doLogout;
-window.doForgotPassword = doForgotPassword;
-
-// INIT
-// ═══════════════════════════════════════════
-(function() {
-  try {
-    var fechaStr=new Date().toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
-    document.getElementById('dateDisplay').textContent=fechaStr;
-  } catch(e) { document.getElementById('dateDisplay').textContent=new Date().toLocaleDateString(); }
-
-  // Tema guardado
-  try {
-    var tema=localStorage.getItem('fluu_theme');
-    if (tema==='light') { document.body.classList.add('light'); var btn=document.getElementById('themeBtn'); if(btn) btn.textContent='☀️'; }
-  } catch(e){}
-
-  // ── SOLUCIÓN SANDBOX APPS SCRIPT ──────────────────────────────────────────
-  // Apps Script bloquea onclick en HTML estático. Usamos un delegador global
-  // en document que intercepta TODOS los clicks y llama la función correcta.
-  function _exec(fn, args) {
-    var funcs = {
-      goTo: goTo, toggleDrawer: toggleDrawer, closeDrawer: closeDrawer,
-      toggleTheme: toggleTheme, toggleSortInventory: toggleSortInventory,
-      agregarProducto: agregarProducto, agregarEntradaCola: agregarEntradaCola,
-      confirmarEntradas: confirmarEntradas, agregarAlCarrito: agregarAlCarrito,
-      confirmarVenta: confirmarVenta, exportarHistorial: exportarHistorial,
-      setRango: setRango, toggleCollapse: toggleCollapse,
-      cancelarBodega: cancelarBodega, guardarBodega: guardarBodega,
-      mostrarFormBodega: mostrarFormBodega, ejecutarTraslado: ejecutarTraslado,
-      toggleTrasladosCard: toggleTrasladosCard, togglePrestamosCard: togglePrestamosCard,
-      abrirNuevoPrestamoModal: abrirNuevoPrestamoModal, toggleStockCard: toggleStockCard,
-      registrarGasto: registrarGasto, cerrarEditCamino: cerrarEditCamino,
-      guardarEditCamino: guardarEditCamino, eliminarPedidoCamino: eliminarPedidoCamino,
-      cerrarNuevoPrestamoModal: cerrarNuevoPrestamoModal, confirmarNuevoPrestamo: confirmarNuevoPrestamo,
-      cerrarAbonarModal: cerrarAbonarModal, confirmarAbonar: confirmarAbonar,
-      closeEdit: closeEdit, guardarEdicion: guardarEdicion,
-      closeDetail: closeDetail, closeConfirm: closeConfirm, doConfirm: doConfirm,
-      doLogout: doLogout, doForgotPassword: doForgotPassword,
-      npUpdateInfo: npUpdateInfo, updateSalidaInfo: updateSalidaInfo,
-      actualizarPreviewGanancia: actualizarPreviewGanancia,
-      toggleEntradaTipo: toggleEntradaTipo, toggleEntradaBodega: toggleEntradaBodega,
-      calcGanancias: calcGanancias, initGastoFecha: initGastoFecha,
-      renderBodegasPage: renderBodegasPage, populateTrasladoSelects: populateTrasladoSelects,
-      updateTrasladoInfo: updateTrasladoInfo, checkRegalosDisponibles: checkRegalosDisponibles
-    };
-    if (funcs[fn]) funcs[fn].apply(null, args || []);
-    else if (window[fn]) window[fn].apply(null, args || []);
-    else console.warn('Función no encontrada:', fn);
-  }
-
-  // Reemplazar todos los onclick con data-action
-  function initActions() {
-    var els = document.querySelectorAll('[onclick]');
-    for (var i = 0; i < els.length; i++) {
+< els.length; i++) {
       var el = els[i];
       var oc = el.getAttribute('onclick');
       if (!oc) continue;
@@ -2910,6 +2771,91 @@ document.addEventListener('click', function(e) {
 }, true);
 
 
+
+// GLOBAL
+window.goTo = goTo;
+window.toggleDrawer = toggleDrawer;
+window.openDrawer = openDrawer;
+window.closeDrawer = closeDrawer;
+window.toggleTheme = toggleTheme;
+window.toggleSortInventory = toggleSortInventory;
+window.agregarProducto = agregarProducto;
+window.renderProductosList = renderProductosList;
+window.editarProducto = editarProducto;
+window.eliminarProducto = eliminarProducto;
+window.populateSelects = populateSelects;
+window.renderInventory = renderInventory;
+window.irASalida = irASalida;
+window.irATraslado = irATraslado;
+window.renderDashboard = renderDashboard;
+window.toggleEntradaTipo = toggleEntradaTipo;
+window.toggleEntradaBodega = toggleEntradaBodega;
+window.agregarEntradaCola = agregarEntradaCola;
+window.renderColaEntradas = renderColaEntradas;
+window.confirmarEntradas = confirmarEntradas;
+window.renderEnCamino = renderEnCamino;
+window.abrirEditPedido = abrirEditPedido;
+window.cerrarEditCamino = cerrarEditCamino;
+window.guardarEditCamino = guardarEditCamino;
+window.eliminarPedidoCamino = eliminarPedidoCamino;
+window.marcarPedidoRecibido = marcarPedidoRecibido;
+window.updateSalidaInfo = updateSalidaInfo;
+window.actualizarPreviewGanancia = actualizarPreviewGanancia;
+window.agregarAlCarrito = agregarAlCarrito;
+window.renderCarrito = renderCarrito;
+window.confirmarVenta = confirmarVenta;
+window.editarMovimiento = editarMovimiento;
+window.guardarEdicion = guardarEdicion;
+window.closeEdit = closeEdit;
+window.editOverlayClick = editOverlayClick;
+window.eliminarMovimiento = eliminarMovimiento;
+window.renderHistorial = renderHistorial;
+window.verDetalleMovimiento = verDetalleMovimiento;
+window.closeDetail = closeDetail;
+window.detailOverlayClick = detailOverlayClick;
+window.exportarHistorial = exportarHistorial;
+window.setRango = setRango;
+window.calcGanancias = calcGanancias;
+window.initGastoFecha = initGastoFecha;
+window.registrarGasto = registrarGasto;
+window.eliminarGasto = eliminarGasto;
+window.renderGastosList = renderGastosList;
+window.populateTrasladoSelects = populateTrasladoSelects;
+window.updateTrasladoInfo = updateTrasladoInfo;
+window.ejecutarTraslado = ejecutarTraslado;
+window.renderBodegasPage = renderBodegasPage;
+window.mostrarFormBodega = mostrarFormBodega;
+window.editarBodega = editarBodega;
+window.cancelarBodega = cancelarBodega;
+window.guardarBodega = guardarBodega;
+window.eliminarBodega = eliminarBodega;
+window.toggleTrasladosCard = toggleTrasladosCard;
+window.togglePrestamosCard = togglePrestamosCard;
+window.toggleStockCard = toggleStockCard;
+window.renderTrasladosList = renderTrasladosList;
+window.calcSaldoPrestamo = calcSaldoPrestamo;
+window.renderPrestamosList = renderPrestamosList;
+window.abrirNuevoPrestamoModal = abrirNuevoPrestamoModal;
+window.cerrarNuevoPrestamoModal = cerrarNuevoPrestamoModal;
+window.npUpdateInfo = npUpdateInfo;
+window.confirmarNuevoPrestamo = confirmarNuevoPrestamo;
+window.abrirAbonarModal = abrirAbonarModal;
+window.cerrarAbonarModal = cerrarAbonarModal;
+window.confirmarAbonar = confirmarAbonar;
+window.eliminarFichaPrestamo = eliminarFichaPrestamo;
+window.toggleCollapse = toggleCollapse;
+window.showConfirm = showConfirm;
+window.closeConfirm = closeConfirm;
+window.doConfirm = doConfirm;
+window.toast = toast;
+window.fmt = fmt;
+window.fmtDate = fmtDate;
+window.gid = gid;
+window.saveAll = saveAll;
+window.actualizarHintCosto = actualizarHintCosto;
+window.doLogin = doLogin;
+window.doLogout = doLogout;
+window.doForgotPassword = doForgotPassword;
 </script>
 </body>
 </html>
