@@ -2796,6 +2796,25 @@ window.actualizarHintCosto = actualizarHintCosto;
 window.doLogin = doLogin;
 window.doLogout = doLogout;
 window.doForgotPassword = doForgotPassword;
+
+  // Manejador de data-action para navegacion
+  document.addEventListener('click', function(e) {
+    var el = e.target;
+    while (el && el !== document) {
+      var action = el.getAttribute('data-action');
+      if (action) {
+        var arg = el.getAttribute('data-arg');
+        var fn = window[action];
+        if (typeof fn === 'function') {
+          e.preventDefault();
+          if (arg !== null && arg !== undefined) fn(arg);
+          else fn();
+        }
+        return;
+      }
+      el = el.parentElement;
+    }
+  });
 </script>
 </body>
 </html>
