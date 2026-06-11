@@ -2151,23 +2151,49 @@ window._editandoTipo=null;
 window._editandoId=null;
 
 function editarMovimiento(id) {
-  var m=movimientos.find(function(x){return x.id===id;});
+  var m = movimientos.find(function(x){ return x.id === id; });
   if (!m) return;
-  editandoMovId=id;
-  window._editandoTipo='movimiento';
-  var fg='<div class="form-group">',fl='<label class="form-label">',fi='<input class="form-input"';
-  var html=fg+fl+'Cliente</label>'+fi+' id="edit-cliente" value="'+(m.cliente||'')+'"/></div>';
-  if (m.tipo==='venta'||m.tipo==='salida') html+=fg+fl+'Teléfono</label>'+fi+' type="tel" id="edit-telefono" value="'+(m.telefono||'')+'"/></div>';
-  if (m.tipo==='venta'&&m.items) {
-    html+=fg+fl+'Precio cobrado por producto</label>';
-    m.items.forEach(function(it,idx2){
-      html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="flex:1;font-size:0.83rem;font-weight:700;color:var(--muted)">'+it.desglose+'</div>'+fi+' type="number" min="0" step="0.01" inputmode="decimal" id="edit-precio-'+idx2+'" value="'+(it.precioTotal||0)+'" style="width:110px;margin-bottom:0"/></div>';
-    });
-    html+='</div>';
+  editandoMovId = id;
+  window._editandoTipo = 'movimiento';
+  var d = document.createElement('div');
+  
+  // Campo cliente
+  var g1 = document.createElement('div'); g1.className = 'form-group';
+  var l1 = document.createElement('label'); l1.className = 'form-label'; l1.textContent = 'Cliente';
+  var i1 = document.createElement('input'); i1.className = 'form-input'; i1.id = 'edit-cliente'; i1.value = m.cliente || ''; i1.setAttribute('autocorrect','off');
+  g1.appendChild(l1); g1.appendChild(i1); d.appendChild(g1);
+
+  // Campo telefono
+  if (m.tipo === 'venta' || m.tipo === 'salida') {
+    var g2 = document.createElement('div'); g2.className = 'form-group';
+    var l2 = document.createElement('label'); l2.className = 'form-label'; l2.textContent = 'Teléfono';
+    var i2 = document.createElement('input'); i2.className = 'form-input'; i2.id = 'edit-telefono'; i2.type = 'tel'; i2.value = m.telefono || '';
+    g2.appendChild(l2); g2.appendChild(i2); d.appendChild(g2);
   }
-  html+=fg+' style="margin-bottom:0">'+fl+'Notas</label>'+fi+' id="edit-notas" value="'+(m.notas||'')+'"/></div>';
-  document.getElementById('editModalContent').innerHTML=html;
-  document.getElementById('editModal').style.display='flex';
+
+  // Items de venta
+  if (m.tipo === 'venta' && m.items) {
+    var gp = document.createElement('div'); gp.style.marginBottom = '12px';
+    var lp = document.createElement('label'); lp.className = 'form-label'; lp.textContent = 'Precio cobrado por producto';
+    gp.appendChild(lp);
+    m.items.forEach(function(it, idx2) {
+      var row = document.createElement('div'); row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px';
+      var desc = document.createElement('div'); desc.style.cssText = 'flex:1;font-size:0.83rem;font-weight:700;color:var(--muted)'; desc.textContent = it.desglose || it.prodNombre;
+      var inp = document.createElement('input'); inp.className = 'form-input'; inp.type = 'number'; inp.min = '0'; inp.step = '0.01'; inp.id = 'edit-precio-' + idx2; inp.value = it.precioTotal || 0; inp.style.cssText = 'width:110px;margin-bottom:0';
+      row.appendChild(desc); row.appendChild(inp); gp.appendChild(row);
+    });
+    d.appendChild(gp);
+  }
+
+  // Campo notas
+  var gn = document.createElement('div'); gn.className = 'form-group'; gn.style.marginBottom = '0';
+  var ln = document.createElement('label'); ln.className = 'form-label'; ln.textContent = 'Notas';
+  var in2 = document.createElement('input'); in2.className = 'form-input'; in2.id = 'edit-notas'; in2.value = m.notas || ''; in2.setAttribute('autocorrect','off');
+  gn.appendChild(ln); gn.appendChild(in2); d.appendChild(gn);
+
+  document.getElementById('editModalContent').innerHTML = '';
+  document.getElementById('editModalContent').appendChild(d);
+  document.getElementById('editModal').style.display = 'flex';
 }
 function guardarEdicion() {
   if (window._editandoTipo==='producto') {
@@ -2684,94 +2710,6 @@ function toggleCollapse(bodyId, btnId) {
   document.getElementById(bodyId).classList.toggle('open');
   document.getElementById(btnId).classList.toggle('open');
 }
-
-// ═══════════════════════════════════════════
-
-< els.length; i++) {
-      var el = els[i];
-      var oc = el.getAttribute('onclick');
-      if (!oc) continue;
-      el.setAttribute('data-onclick', oc);
-      el.removeAttribute('onclick');
-    }
-
-    // Delegador global de clicks
-    document.body.addEventListener('click', function(e) {
-      var target = e.target;
-      // Buscar el elemento con data-onclick mas cercano
-      while (target && target !== document.body) {
-        var oc = target.getAttribute('data-onclick');
-        if (oc) {
-          try { eval(oc); } catch(err) { console.error('Error en accion:', oc, err); }
-          return;
-        }
-        target = target.parentElement;
-      }
-    }, true);
-  }
-
-  // Ejecutar al cargar
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initActions);
-  } else {
-    initActions();
-  }
-}());
-
-
-// ── DELEGADOR DE EVENTOS GLOBAL ──────────────────────────────────────────────
-document.addEventListener('click', function(e) {
-  var el = e.target;
-  while (el && el !== document) {
-    var action = el.getAttribute('data-action');
-    if (action) {
-      var arg  = el.getAttribute('data-arg');
-      var arg2 = el.getAttribute('data-arg2');
-      try {
-        if (action === 'goTo')          { goTo(arg); }
-        else if (action === 'toggleDrawer')  { toggleDrawer(); }
-        else if (action === 'closeDrawer')   { closeDrawer(); }
-        else if (action === 'toggleTheme')   { toggleTheme(); }
-        else if (action === 'doLogout')      { doLogout(); }
-        else if (action === 'toggleSortInventory') { toggleSortInventory(); }
-        else if (action === 'agregarEntradaCola')  { agregarEntradaCola(); }
-        else if (action === 'confirmarEntradas')   { confirmarEntradas(); }
-        else if (action === 'agregarAlCarrito')    { agregarAlCarrito(); }
-        else if (action === 'confirmarVenta')      { confirmarVenta(arg === 'true'); }
-        else if (action === 'exportarHistorial')   { exportarHistorial(); }
-        else if (action === 'agregarProducto')     { agregarProducto(); }
-        else if (action === 'setRango')            { setRango(arg, el); }
-        else if (action === 'toggleCollapse')      { toggleCollapse(arg, arg2); }
-        else if (action === 'cancelarBodega')      { cancelarBodega(); }
-        else if (action === 'guardarBodega')       { guardarBodega(); }
-        else if (action === 'mostrarFormBodega')   { mostrarFormBodega(); }
-        else if (action === 'ejecutarTraslado')    { ejecutarTraslado(); }
-        else if (action === 'toggleTrasladosCard') { toggleTrasladosCard(); }
-        else if (action === 'togglePrestamosCard') { togglePrestamosCard(); }
-        else if (action === 'abrirNuevoPrestamoModal') { abrirNuevoPrestamoModal(); }
-        else if (action === 'toggleStockCard')     { toggleStockCard(); }
-        else if (action === 'registrarGasto')      { registrarGasto(); }
-        else if (action === 'cerrarEditCamino')    { cerrarEditCamino(); }
-        else if (action === 'guardarEditCamino')   { guardarEditCamino(); }
-        else if (action === 'eliminarPedidoCamino'){ eliminarPedidoCamino(); }
-        else if (action === 'cerrarNuevoPrestamoModal') { cerrarNuevoPrestamoModal(); }
-        else if (action === 'confirmarNuevoPrestamo')   { confirmarNuevoPrestamo(); }
-        else if (action === 'cerrarAbonarModal')   { cerrarAbonarModal(); }
-        else if (action === 'confirmarAbonar')     { confirmarAbonar(); }
-        else if (action === 'closeEdit')           { closeEdit(); }
-        else if (action === 'guardarEdicion')      { guardarEdicion(); }
-        else if (action === 'closeDetail')         { closeDetail(); }
-        else if (action === 'closeConfirm')        { closeConfirm(); }
-        else if (action === 'doConfirm')           { doConfirm(); }
-        else if (action === 'npUpdateInfo')        { npUpdateInfo(); }
-        else if (action === 'calcGanancias')       { calcGanancias(); }
-      } catch(err) { console.error('Error en accion ' + action + ':', err); }
-      break;
-    }
-    el = el.parentElement;
-  }
-}, true);
-
 
 
 // GLOBAL
