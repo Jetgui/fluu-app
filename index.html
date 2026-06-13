@@ -321,7 +321,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
 <div id="page-dashboard" class="page active">
   <div id="saludo-box" style="margin-bottom:20px;padding:16px;background:linear-gradient(135deg,rgba(0,229,160,0.08),rgba(123,108,255,0.06));border:1px solid rgba(0,229,160,0.15);border-radius:16px">
     <div style="font-size:1.18rem;font-weight:900;line-height:1.4;letter-spacing:-0.01em">
-      👋 Hola <span style="color:var(--accent)">Fluu</span>, este es tu resumen de <span style="color:var(--accent)">hoy</span>
+      👋 Hola <span id="dash-negocio-nombre" style="color:var(--accent)">Fluu</span>, este es tu resumen de <span style="color:var(--accent)">hoy</span>
     </div>
     <div id="dash-fecha" style="font-size:0.76rem;color:var(--muted);margin-top:5px;font-weight:600;text-transform:capitalize"></div>
   </div>
@@ -882,6 +882,28 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
   </div>
 </div>
 
+
+<!-- ═══ CONFIGURACIÓN ═══ -->
+<div id="page-configuracion" class="page">
+  <div class="card">
+    <strong style="font-size:0.95rem;display:block;margin-bottom:6px">⚙️ Configuración de tu negocio</strong>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px">Personaliza cómo aparece tu app.</p>
+    <div class="form-group">
+      <label class="form-label">🏪 Nombre de tu negocio</label>
+      <input class="form-input" id="config-negocio" placeholder="Ej: Tienda de Ana, Mi Negocio..." autocomplete="off"/>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">Aparecerá en el saludo de inicio: "Hola [Tu negocio]"</div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="guardarConfigNegocio()">💾 Guardar configuración</button>
+  </div>
+  <div class="card" style="border-color:rgba(0,229,160,0.2);background:rgba(0,229,160,0.03)">
+    <strong style="font-size:0.92rem;display:block;margin-bottom:10px">👤 Tu cuenta</strong>
+    <div style="font-size:0.88rem;color:var(--muted);margin-bottom:6px">Correo electrónico:</div>
+    <div id="config-email" style="font-weight:700;font-size:0.95rem;margin-bottom:16px"></div>
+    <div style="font-size:0.88rem;color:var(--muted);margin-bottom:6px">Versión:</div>
+    <div style="font-weight:700;font-size:0.95rem">Fluu v3.0 · Firebase</div>
+  </div>
+</div>
+
 </main>
 
 <!-- Modal Editar Pedido en Camino -->
@@ -1124,6 +1146,7 @@ var bodegas     = [];
 var gastos      = [];
 var prestamos   = [];
 var carrito     = [];
+var configNegocio = { nombre: 'Fluu' };
 var _cargaCompleta = false;
 var BODEGA_COLORS = ['#00e5a0','#ff6b35','#7b6cff'];
 
@@ -1207,7 +1230,8 @@ function saveAll(successMsg, successIcon) {
     bodegas:     bodegas,
     gastos:      gastos,
     prestamos:   prestamos,
-    config:      { tema: document.body.classList.contains('light') ? 'light' : 'dark' }
+    config:      { tema: document.body.classList.contains('light') ? 'light' : 'dark' },
+    configNegocio: configNegocio
   };
   window._saveToFirestore(payload).then(function() {
     if (successMsg) toast(successMsg, successIcon || '✅');
@@ -1222,6 +1246,8 @@ window._arrancarConDatos = function(data) {
   bodegas     = data.bodegas   || [];
   gastos      = (data.gastos   || []).map(function(g){ g.monto=toNum(g.monto); g.ts=toNum(g.ts); return g; });
   prestamos   = (data.prestamos || []).map(normalizarPrestamo);
+  configNegocio = data.configNegocio || { nombre: 'Fluu' };
+  actualizarNombreNegocio();
 
   if (data.config && data.config.tema === 'light') {
     document.body.classList.add('light');
@@ -1443,7 +1469,8 @@ function closeDrawer() { document.getElementById('drawer').classList.remove('ope
 var PAGE_TITLES = {
   dashboard:'Inicio', inventory:'Inventario', entradas:'Entradas',
   salidas:'Salidas', historial:'Historial', productos:'Productos',
-  ganancias:'Ganancias', bodegas:'Bodegas', gastos:'Gastos Operativos'
+  ganancias:'Ganancias', bodegas:'Bodegas', gastos:'Gastos Operativos',
+  configuracion:'Configuración'
 };
 
 function goTo(name) {
@@ -1468,6 +1495,7 @@ function refreshPage(name) {
   if (name==='ganancias') { setRango('todo', document.querySelectorAll('.quick-range-btn')[3]); }
   if (name==='bodegas')   { renderBodegasPage(); populateTrasladoSelects(); renderTrasladosList(); renderPrestamosList(); }
   if (name==='gastos')    { renderGastosList(); initGastoFecha(); }
+  if (name==='configuracion') { actualizarNombreNegocio(); }
 }
 
 // ═══════════════════════════════════════════
@@ -2713,6 +2741,10 @@ function toggleCollapse(bodyId, btnId) {
 
 
 // GLOBAL
+window.guardarConfigNegocio = guardarConfigNegocio;
+window.actualizarNombreNegocio = actualizarNombreNegocio;
+window.guardarConfigNegocio = guardarConfigNegocio;
+window.actualizarNombreNegocio = actualizarNombreNegocio;
 window.goTo = goTo;
 window.toggleDrawer = toggleDrawer;
 window.openDrawer = openDrawer;
@@ -2817,4 +2849,22 @@ window.doForgotPassword = doForgotPassword;
   });
 </script>
 </body>
-</html>
+</html>// ═══════════════════════════════════════════
+// CONFIGURACIÓN DEL NEGOCIO
+// ═══════════════════════════════════════════
+function guardarConfigNegocio() {
+  var nombre = document.getElementById('config-negocio') ? document.getElementById('config-negocio').value.trim() : '';
+  if (!nombre) { toast('Ingresa el nombre de tu negocio', '⚠️', true); return; }
+  configNegocio.nombre = nombre;
+  saveAll('Configuración guardada', '✅');
+  actualizarNombreNegocio();
+}
+
+function actualizarNombreNegocio() {
+  var el = document.getElementById('dash-negocio-nombre');
+  if (el) el.textContent = configNegocio.nombre || 'Fluu';
+  var inputEl = document.getElementById('config-negocio');
+  if (inputEl) inputEl.value = configNegocio.nombre || '';
+  var emailEl = document.getElementById('config-email');
+  if (emailEl && window._currentUser) emailEl.textContent = window._currentUser.email || '';
+}
