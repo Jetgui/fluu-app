@@ -239,7 +239,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
       <button id="forgotBtn" style="background:none;border:none;color:var(--muted);font-size:0.82rem;cursor:pointer;font-family:'Manrope',sans-serif">¿Olvidaste tu contraseña?</button>
     </div>
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-size:0.75rem;color:var(--muted);text-align:center">
-      v3.0 · Con tecnología Firebase
+      v3.1 · Con tecnología Firebase
     </div>
   </div>
 </div>
@@ -1137,6 +1137,24 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
 </script>
 
 <script>
+function actualizarNombreNegocio() {
+  var el = document.getElementById('dash-negocio-nombre');
+  if (el) el.textContent = configNegocio.nombre || 'Fluu';
+  var inputEl = document.getElementById('config-negocio');
+  if (inputEl) inputEl.value = configNegocio.nombre || '';
+  var emailEl = document.getElementById('config-email');
+  if (emailEl && window._currentUser) emailEl.textContent = window._currentUser.email || '';
+}
+
+function guardarConfigNegocio() {
+  var nombre = document.getElementById('config-negocio') ? document.getElementById('config-negocio').value.trim() : '';
+  if (!nombre) { toast('Ingresa el nombre de tu negocio', '⚠️', true); return; }
+  configNegocio.nombre = nombre;
+  saveAll('¡Nombre actualizado a "' + nombre + '"!', '🏪');
+  actualizarNombreNegocio();
+}
+
+
 // ═══════════════════════════════════════════
 // ESTADO GLOBAL
 // ═══════════════════════════════════════════
@@ -1240,6 +1258,10 @@ function saveAll(successMsg, successIcon) {
 
 // ── ARRANCAR CON DATOS ────────────────────
 var _primeraVez = true;
+
+
+
+
 window._arrancarConDatos = function(data) {
   productos   = (data.productos   || []).map(normalizarProducto);
   movimientos = (data.movimientos || []).map(normalizarMovimiento);
@@ -1247,7 +1269,7 @@ window._arrancarConDatos = function(data) {
   gastos      = (data.gastos   || []).map(function(g){ g.monto=toNum(g.monto); g.ts=toNum(g.ts); return g; });
   prestamos   = (data.prestamos || []).map(normalizarPrestamo);
   configNegocio = data.configNegocio || { nombre: 'Fluu' };
-  actualizarNombreNegocio();
+  if (typeof actualizarNombreNegocio === 'function') actualizarNombreNegocio();
 
   if (data.config && data.config.tema === 'light') {
     document.body.classList.add('light');
@@ -2740,6 +2762,15 @@ function toggleCollapse(bodyId, btnId) {
 }
 
 
+function guardarConfigNegocio() {
+  var nombre = document.getElementById('config-negocio') ? document.getElementById('config-negocio').value.trim() : '';
+  if (!nombre) { toast('Ingresa el nombre de tu negocio', '⚠️', true); return; }
+  configNegocio.nombre = nombre;
+  saveAll('Configuración guardada', '✅');
+  actualizarNombreNegocio();
+}
+
+
 // GLOBAL
 window.guardarConfigNegocio = guardarConfigNegocio;
 window.actualizarNombreNegocio = actualizarNombreNegocio;
@@ -2849,22 +2880,4 @@ window.doForgotPassword = doForgotPassword;
   });
 </script>
 </body>
-</html>// ═══════════════════════════════════════════
-// CONFIGURACIÓN DEL NEGOCIO
-// ═══════════════════════════════════════════
-function guardarConfigNegocio() {
-  var nombre = document.getElementById('config-negocio') ? document.getElementById('config-negocio').value.trim() : '';
-  if (!nombre) { toast('Ingresa el nombre de tu negocio', '⚠️', true); return; }
-  configNegocio.nombre = nombre;
-  saveAll('Configuración guardada', '✅');
-  actualizarNombreNegocio();
-}
-
-function actualizarNombreNegocio() {
-  var el = document.getElementById('dash-negocio-nombre');
-  if (el) el.textContent = configNegocio.nombre || 'Fluu';
-  var inputEl = document.getElementById('config-negocio');
-  if (inputEl) inputEl.value = configNegocio.nombre || '';
-  var emailEl = document.getElementById('config-email');
-  if (emailEl && window._currentUser) emailEl.textContent = window._currentUser.email || '';
-}
+</html>
