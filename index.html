@@ -1751,6 +1751,9 @@ function renderDashboard() {
   var fechaStr = hoy.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   var fechaEl = document.getElementById('dash-fecha');
   if (fechaEl) fechaEl.textContent = fechaStr.charAt(0).toUpperCase()+fechaStr.slice(1);
+  // Actualizar nombre del negocio
+  var negEl = document.getElementById('dash-negocio-nombre');
+  if (negEl) negEl.textContent = (configNegocio && configNegocio.nombre) ? configNegocio.nombre : 'Fluu';
 
   document.getElementById('stat-paquetes').textContent = productos.reduce(function(a,p){ return a+totalPaquetes(p); },0);
   document.getElementById('stat-sobres').textContent   = productos.reduce(function(a,p){ return a+totalSobres(p); },0);
@@ -2762,18 +2765,7 @@ function toggleCollapse(bodyId, btnId) {
 }
 
 
-function guardarConfigNegocio() {
-  var nombre = document.getElementById('config-negocio') ? document.getElementById('config-negocio').value.trim() : '';
-  if (!nombre) { toast('Ingresa el nombre de tu negocio', '⚠️', true); return; }
-  configNegocio.nombre = nombre;
-  saveAll('Configuración guardada', '✅');
-  actualizarNombreNegocio();
-}
-
-
 // GLOBAL
-window.guardarConfigNegocio = guardarConfigNegocio;
-window.actualizarNombreNegocio = actualizarNombreNegocio;
 window.guardarConfigNegocio = guardarConfigNegocio;
 window.actualizarNombreNegocio = actualizarNombreNegocio;
 window.goTo = goTo;
