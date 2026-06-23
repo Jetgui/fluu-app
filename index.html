@@ -271,6 +271,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
     <div class="nav-item" data-action="goTo" data-arg="bodegas" data-page="bodegas"><span class="nav-icon">🏠</span> Bodegas</div>
     <div class="nav-item" data-action="goTo" data-arg="gastos" data-page="gastos"><span class="nav-icon">📊</span> Gastos</div>
     <div class="nav-item" onclick="window.open('https://calculadora-ventas-cop-cl-es.netlify.app/','_blank')"><span class="nav-icon">🧮</span> Calculadora</div>
+    <div class="nav-item" data-action="goTo" data-arg="configuracion" data-page="configuracion"><span class="nav-icon">⚙️</span> Configuración</div>
   </div>
   <div style="padding:12px 18px;border-top:1px solid var(--border);">
     <button data-action="doLogout" style="width:100%;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.25);border-radius:10px;color:#ff6b6b;font-family:'Manrope',sans-serif;font-size:0.85rem;font-weight:700;padding:10px;cursor:pointer;">🚪 Cerrar sesión</button>
@@ -290,6 +291,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
     <div class="nav-item" data-action="goTo" data-arg="bodegas" data-page="bodegas"><span class="nav-icon">🏠</span> Bodegas</div>
     <div class="nav-item" data-action="goTo" data-arg="gastos" data-page="gastos"><span class="nav-icon">📊</span> Gastos</div>
     <div class="nav-item" onclick="window.open('https://calculadora-ventas-cop-cl-es.netlify.app/','_blank')"><span class="nav-icon">🧮</span> Calculadora</div>
+    <div class="nav-item" data-action="goTo" data-arg="configuracion" data-page="configuracion"><span class="nav-icon">⚙️</span> Configuración</div>
   </div>
   <div style="padding:8px 12px;border-top:1px solid var(--border);">
     <button data-action="doLogout" style="width:100%;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.25);border-radius:10px;color:#ff6b6b;font-family:'Manrope',sans-serif;font-size:0.82rem;font-weight:700;padding:9px;cursor:pointer;">🚪 Cerrar sesión</button>
@@ -356,13 +358,6 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
     <div class="card" style="padding:14px">
       <div style="font-size:0.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">Stock por bodega</div>
       <div id="dash-bodegas-list"></div>
-    </div>
-  </div>
-  <!-- Alertas de stock -->
-  <div id="dash-alertas-wrap" style="display:none;margin-bottom:14px">
-    <div class="card" style="padding:14px;border-color:rgba(255,68,68,0.3)">
-      <div style="font-size:0.8rem;font-weight:700;color:#ff6b6b;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">⚠️ Alertas de stock</div>
-      <div id="dash-alertas-list"></div>
     </div>
   </div>
 </div>
@@ -1785,25 +1780,6 @@ function renderDashboard() {
       return '<div class="bodega-row"><div class="bodega-color" style="background:'+col+'"></div><div style="flex:1;font-weight:700">'+b.nombre+'</div><div style="font-family:\'JetBrains Mono\',monospace;font-size:1.3rem;font-weight:900;color:var(--accent2)">'+paq+' paq.</div><div style="font-family:\'JetBrains Mono\',monospace;font-size:1.3rem;font-weight:900;color:var(--accent3);margin-left:12px">'+sob+' sob.</div></div>';
     }).join('');
   } else { wrap.style.display='none'; }
-
-  // Alertas de stock
-  var alertas = productos.filter(function(p) {
-    var paq=totalPaquetes(p), min=toNum(p.stockMin), max=toNum(p.stockMax);
-    if (min>0 && paq<=min) return true;
-    if (!min && paq<=4) return true;
-    return false;
-  });
-  var awrap=document.getElementById('dash-alertas-wrap'), alist=document.getElementById('dash-alertas-list');
-  if (alertas.length) {
-    awrap.style.display='block';
-    alist.innerHTML = alertas.map(function(p) {
-      return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(42,48,69,0.3)">' +
-        '<span style="font-size:1rem">🔴</span>' +
-        '<span style="flex:1;font-weight:700;font-size:0.9rem">' + p.nombre + '</span>' +
-        '<span style="font-family:\'JetBrains Mono\',monospace;font-size:0.85rem;color:#ff6b6b;font-weight:700">' + totalPaquetes(p) + ' paq.</span>' +
-      '</div>';
-    }).join('');
-  } else { awrap.style.display='none'; }
 }
 
 // ═══════════════════════════════════════════
@@ -1892,6 +1868,8 @@ function renderColaEntradas() {
 function confirmarEntradas() {
   if (!colaEntradas.length) { toast('No hay entradas en la lista','⚠️',true); return; }
   var ts=Date.now(), pedidoId=gid();
+  var fleteEl=document.getElementById('entrada-flete'), fleteMonto=fleteEl?(parseFloat(fleteEl.value)||0):0;
+  var fletePorItem = colaEntradas.length>0 ? (fleteMonto/colaEntradas.length) : 0;
   colaEntradas.forEach(function(item) {
     var p=productos.find(function(x){return x.id===item.prodId;});
     if (!p) return;
@@ -1901,9 +1879,9 @@ function confirmarEntradas() {
       if (stock) stock.sobres+=item.cantidad;
       if (item.esRegalo) p.sobresRegalo=(p.sobresRegalo||0)+item.cantidad;
       p.sobresSueltos=totalSobres(p);
-      mov={id:gid(),tipo:'entrada_sobres',prodId:item.prodId,prodNombre:item.prodNombre,cantidad:item.cantidad,proveedor:item.proveedor,notas:item.notas,bodegaId:item.bodegaId,bodegaNombre:item.bodegaNombre,esRegalo:item.esRegalo,descuento:item.descuento,inversionTotal:item.inversion,ts:ts};
+      mov={id:gid(),tipo:'entrada_sobres',prodId:item.prodId,prodNombre:item.prodNombre,cantidad:item.cantidad,proveedor:item.proveedor,notas:item.notas,bodegaId:item.bodegaId,bodegaNombre:item.bodegaNombre,esRegalo:item.esRegalo,descuento:item.descuento,inversionTotal:item.inversion,fleteAsignado:fletePorItem,ts:ts};
     } else {
-      mov={id:gid(),tipo:item.estado==='bodega'?'entrada_directa':'entrada',prodId:item.prodId,prodNombre:item.prodNombre,cantidad:item.cantidad,tipoCantidad:'paquetes',proveedor:item.proveedor,notas:item.notas,bodegaId:item.bodegaId,bodegaNombre:item.bodegaNombre,esRegalo:item.esRegalo,descuento:item.descuento,inversionTotal:item.inversion,ts:ts};
+      mov={id:gid(),tipo:item.estado==='bodega'?'entrada_directa':'entrada',prodId:item.prodId,prodNombre:item.prodNombre,cantidad:item.cantidad,tipoCantidad:'paquetes',proveedor:item.proveedor,notas:item.notas,bodegaId:item.bodegaId,bodegaNombre:item.bodegaNombre,esRegalo:item.esRegalo,descuento:item.descuento,inversionTotal:item.inversion,fleteAsignado:fletePorItem,ts:ts};
       if (item.estado==='bodega') {
         if (stock) stock.paquetes+=item.cantidad;
         if (item.esRegalo) p.paquetesRegalo=(p.paquetesRegalo||0)+item.cantidad;
@@ -1917,9 +1895,7 @@ function confirmarEntradas() {
     }
     movimientos.unshift(mov);
   });
-  var fleteEl=document.getElementById('entrada-flete'), fleteMonto=fleteEl?(parseFloat(fleteEl.value)||0):0;
-  if (fleteMonto>0) movimientos.unshift({id:gid(),tipo:'entrada_flete',prodNombre:'Flete — '+(colaEntradas[0].proveedor||'Proveedor'),proveedor:colaEntradas[0].proveedor||'',inversionTotal:fleteMonto,cantidad:0,ts:ts,notas:'Flete del pedido'});
-  saveAll(colaEntradas.length+' entrada(s) registrada(s)','⬇️');
+  saveAll(colaEntradas.length+' entrada(s) registrada(s)'+(fleteMonto>0?' · Flete: '+fmt(fleteMonto):''),'⬇️');
   colaEntradas=[];
   document.getElementById('entrada-proveedor').value='';
   if (fleteEl) fleteEl.value='';
@@ -2196,7 +2172,8 @@ function histItemHTML(m, showDelete) {
 
   var cant=m.desglose?m.desglose:(m.tipo==='entrada_sobres'?m.cantidad+' sobre(s)':(m.tipoCantidad==='paquetes'?m.cantidad+' paq.':m.cantidad+' sob.'));
   var persona=m.cliente||m.proveedor||'';
-  return '<div class="hist-item" data-mid="'+m.id+'"><div class="hist-icon" style="background:'+cfg.bg+';color:'+cfg.color+'">'+cfg.icon+'</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-weight:700;font-size:0.95rem">'+(m.prodNombre||persona)+'</span><span class="badge" style="background:'+cfg.bg+';color:'+cfg.color+';font-size:0.63rem;padding:2px 7px">'+cfg.label+'</span></div><div style="font-size:0.86rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(persona?persona+' · ':'')+cant+(m.precioTotal?' · '+fmt(m.precioTotal)+'→ gan '+fmt(m.ganancia||0):'')+(m.notas?' · '+m.notas:'')+'</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;padding-left:6px;gap:4px"><div style="font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;color:var(--muted)">'+fmtDate(m.ts)+'</div><div style="display:flex;gap:4px">'+editBtn+delBtn+'</div></div></div>';
+  var fleteTxt=m.fleteAsignado?(' · flete '+fmt(m.fleteAsignado)):'';
+  return '<div class="hist-item" data-mid="'+m.id+'"><div class="hist-icon" style="background:'+cfg.bg+';color:'+cfg.color+'">'+cfg.icon+'</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-weight:700;font-size:0.95rem">'+(m.prodNombre||persona)+'</span><span class="badge" style="background:'+cfg.bg+';color:'+cfg.color+';font-size:0.63rem;padding:2px 7px">'+cfg.label+'</span></div><div style="font-size:0.86rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(persona?persona+' · ':'')+cant+(m.precioTotal?' · '+fmt(m.precioTotal)+'→ gan '+fmt(m.ganancia||0):'')+(m.inversionTotal?' · inv '+fmt(m.inversionTotal):'')+fleteTxt+(m.notas?' · '+m.notas:'')+'</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;padding-left:6px;gap:4px"><div style="font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;color:var(--muted)">'+fmtDate(m.ts)+'</div><div style="display:flex;gap:4px">'+editBtn+delBtn+'</div></div></div>';
 }
 
 var editandoMovId=null;
@@ -2334,6 +2311,9 @@ function verDetalleMovimiento(id) {
   if (m.proveedor) html+=row('Proveedor',m.proveedor);
   if (m.bodegaNombre) html+=row('Bodega',m.bodegaNombre);
   if (m.precioTotal) { html+=row('Cobrado',fmt(m.precioTotal),'var(--accent)'); html+=row('Costo',fmt(m.costoTotal||0),'var(--accent2)'); var gan=m.ganancia||0; html+=row('Ganancia',fmt(gan),gan>=0?'var(--accent)':'#ff4444'); }
+  if (m.inversionTotal) html+=row('Inversión (producto)',fmt(m.inversionTotal),'var(--accent2)');
+  if (m.fleteAsignado)  html+=row('Flete de esta entrada',fmt(m.fleteAsignado),'#5ba4f5');
+  if (m.descuento)      html+=row('Descuento',fmt(m.descuento));
   if (m.notas) html+=row('Notas',m.notas);
   document.getElementById('detailModalContent').innerHTML=html;
   document.getElementById('detailModal').style.display='flex';
@@ -2379,7 +2359,7 @@ function calcGanancias() {
   ventas.forEach(function(v){totI+=v.precioTotal||0;totC+=v.costoTotal||0;totG+=v.ganancia||0;});
 
   var valorStock=productos.reduce(function(acc,p){var cp=toNum(p.costoPaquete),cs=toNum(p.costoPorSobre),paq=Math.max(0,totalPaquetes(p)-(p.paquetesRegalo||0)),sob=Math.max(0,totalSobres(p)-(p.sobresRegalo||0)),ec=(p.paquetesEnCamino||[]).reduce(function(a,b){return a+(b.esRegalo?0:(b.cantidad||0));},0);return acc+(cp*paq)+(cs*sob)+(cp*ec);},0);
-  var totFlete=movimientos.filter(function(m){return m.tipo==='entrada_flete'&&m.ts>=desdets&&m.ts<=hastats;}).reduce(function(a,m){return a+(m.inversionTotal||0);},0);
+  var totFlete=movimientos.filter(function(m){return (m.tipo==='entrada'||m.tipo==='entrada_directa'||m.tipo==='entrada_sobres')&&m.ts>=desdets&&m.ts<=hastats;}).reduce(function(a,m){return a+(m.fleteAsignado||0);},0);
   var totInv=valorStock+totC+totFlete;
 
   document.getElementById('gan-inversion').textContent=fmt(totInv);
@@ -2862,7 +2842,9 @@ window.doForgotPassword = doForgotPassword;
         var fn = window[action];
         if (typeof fn === 'function') {
           e.preventDefault();
-          if (arg !== null && arg !== undefined) fn(arg);
+          if (arg === 'true') fn(true);
+          else if (arg === 'false') fn(false);
+          else if (arg !== null && arg !== undefined) fn(arg);
           else fn();
         }
         return;
