@@ -919,7 +919,12 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
     </div>
     <div class="form-group" style="margin-bottom:6px">
       <label class="form-label">Productos de este pedido</label>
-      <div id="ec-items-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div id="ec-items-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+      <div style="display:flex;gap:6px;align-items:flex-end">
+        <select class="form-input" id="ec-nuevo-producto" style="margin-bottom:0;flex:1"><option value="">+ Agregar producto...</option></select>
+        <input class="form-input" id="ec-nueva-cantidad" type="number" min="1" placeholder="Cant." style="width:75px;margin-bottom:0"/>
+        <button class="btn btn-ghost" id="ec-add-btn" style="white-space:nowrap;padding:0 14px;height:46px">➕</button>
+      </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
       <button class="btn btn-ghost" data-action="cerrarEditCamino">Cancelar</button>
@@ -1932,17 +1937,36 @@ function abrirEditPedido(pedidoId) {
   document.getElementById('ec-notas').value=first.ec.notas||'';
   document.getElementById('editCaminoModal').dataset.pedidoId=pedidoId;
 
+  // Poblar selector de producto nuevo
+  var nuevoSel=document.getElementById('ec-nuevo-producto');
+  nuevoSel.innerHTML='<option value="">+ Agregar producto...</option>'+productos.map(function(p){return '<option value="'+p.id+'">'+p.nombre+'</option>';}).join('');
+  document.getElementById('ec-nueva-cantidad').value='';
+
   var itemsList=document.getElementById('ec-items-list');
-  itemsList.innerHTML=itemsDelPedido.map(function(x){
-    return '<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px" data-ec-id="'+x.ec.id+'">'+
-      '<div style="flex:1;font-size:0.85rem;font-weight:700">'+x.p.nombre+'</div>'+
-      '<input class="form-input ec-item-cant" type="number" min="1" value="'+x.ec.cantidad+'" style="width:70px;margin-bottom:0;text-align:center"/>'+
-      '<button class="ec-item-del" data-ec-id="'+x.ec.id+'" style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:8px;color:#ff4444;font-size:0.8rem;padding:6px 9px;cursor:pointer">🗑</button>'+
+  function pintarItem(prodId,prodNombre,ecId,cantidad){
+    return '<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px" data-ec-id="'+ecId+'" data-prod-id="'+prodId+'">'+
+      '<div style="flex:1;font-size:0.85rem;font-weight:700">'+prodNombre+'</div>'+
+      '<input class="form-input ec-item-cant" type="number" min="1" value="'+cantidad+'" style="width:70px;margin-bottom:0;text-align:center"/>'+
+      '<button class="ec-item-del" data-ec-id="'+ecId+'" style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:8px;color:#ff4444;font-size:0.8rem;padding:6px 9px;cursor:pointer">🗑</button>'+
     '</div>';
-  }).join('');
+  }
+  itemsList.innerHTML=itemsDelPedido.map(function(x){ return pintarItem(x.p.id,x.p.nombre,x.ec.id,x.ec.cantidad); }).join('');
   itemsList.onclick=function(e){
     var btn=e.target.closest('.ec-item-del');
     if (btn) { btn.closest('[data-ec-id]').remove(); }
+  };
+
+  var addBtn=document.getElementById('ec-add-btn');
+  addBtn.onclick=function(){
+    var prodId=nuevoSel.value;
+    var cant=parseInt(document.getElementById('ec-nueva-cantidad').value)||0;
+    if (!prodId) { toast('Selecciona un producto','⚠️',true); return; }
+    if (cant<1) { toast('Ingresa una cantidad válida','⚠️',true); return; }
+    var prod=productos.find(function(x){return x.id===prodId;});
+    if (!prod) return;
+    var nuevoId='nuevo_'+gid();
+    itemsList.insertAdjacentHTML('beforeend', pintarItem(prodId,prod.nombre,nuevoId,cant));
+    nuevoSel.value=''; document.getElementById('ec-nueva-cantidad').value='';
   };
 
   document.getElementById('editCaminoModal').style.display='flex';
@@ -1960,12 +1984,17 @@ function guardarEditCamino() {
 
   // Leer los items que quedaron visibles (los eliminados ya se quitaron del DOM)
   var rows=document.querySelectorAll('#ec-items-list [data-ec-id]');
-  var idsVisibles={}, cantidades={};
+  var idsVisibles={}, cantidades={}, nuevos=[];
   rows.forEach(function(row){
     var ecId=row.getAttribute('data-ec-id');
-    idsVisibles[ecId]=true;
     var inp=row.querySelector('.ec-item-cant');
-    cantidades[ecId]=Math.max(1, parseInt(inp.value)||1);
+    var cant=Math.max(1, parseInt(inp.value)||1);
+    if (ecId.indexOf('nuevo_')===0) {
+      nuevos.push({prodId:row.getAttribute('data-prod-id'),cantidad:cant});
+    } else {
+      idsVisibles[ecId]=true;
+      cantidades[ecId]=cant;
+    }
   });
 
   productos.forEach(function(p){
@@ -1976,6 +2005,14 @@ function guardarEditCamino() {
       if (cantidades[ec.id]) ec.cantidad=cantidades[ec.id];
       return true;
     });
+  });
+
+  // Agregar los productos nuevos al mismo pedido
+  nuevos.forEach(function(n){
+    var p=productos.find(function(x){return x.id===n.prodId;});
+    if (!p) return;
+    p.paquetesEnCamino=p.paquetesEnCamino||[];
+    p.paquetesEnCamino.push({id:gid(),cantidad:n.cantidad,proveedor:proveedor,notas:notas,bodegaId:bodegaId,bodegaNombre:bodNombre,ts:Date.now(),pedidoId:pedidoId,esRegalo:false});
   });
 
   saveAll('Pedido actualizado','✅');
