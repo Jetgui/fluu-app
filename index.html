@@ -917,6 +917,10 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
       <label class="form-label">Notas (opcional)</label>
       <input class="form-input" id="ec-notas" placeholder="Notas..."/>
     </div>
+    <div class="form-group" style="margin-bottom:6px">
+      <label class="form-label">Productos de este pedido</label>
+      <div id="ec-items-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
       <button class="btn btn-ghost" data-action="cerrarEditCamino">Cancelar</button>
       <button class="btn btn-primary" data-action="guardarEditCamino">💾 Guardar</button>
@@ -1927,6 +1931,20 @@ function abrirEditPedido(pedidoId) {
   document.getElementById('ec-proveedor').value=first.ec.proveedor||'';
   document.getElementById('ec-notas').value=first.ec.notas||'';
   document.getElementById('editCaminoModal').dataset.pedidoId=pedidoId;
+
+  var itemsList=document.getElementById('ec-items-list');
+  itemsList.innerHTML=itemsDelPedido.map(function(x){
+    return '<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px" data-ec-id="'+x.ec.id+'">'+
+      '<div style="flex:1;font-size:0.85rem;font-weight:700">'+x.p.nombre+'</div>'+
+      '<input class="form-input ec-item-cant" type="number" min="1" value="'+x.ec.cantidad+'" style="width:70px;margin-bottom:0;text-align:center"/>'+
+      '<button class="ec-item-del" data-ec-id="'+x.ec.id+'" style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:8px;color:#ff4444;font-size:0.8rem;padding:6px 9px;cursor:pointer">🗑</button>'+
+    '</div>';
+  }).join('');
+  itemsList.onclick=function(e){
+    var btn=e.target.closest('.ec-item-del');
+    if (btn) { btn.closest('[data-ec-id]').remove(); }
+  };
+
   document.getElementById('editCaminoModal').style.display='flex';
 }
 
@@ -1939,9 +1957,29 @@ function guardarEditCamino() {
   var notas=document.getElementById('ec-notas').value.trim();
   if (!proveedor) { toast('El proveedor es obligatorio','⚠️',true); return; }
   var bodNombre=(bodegas.find(function(b){return b.id===bodegaId;})||{}).nombre||'';
-  productos.forEach(function(p){ (p.paquetesEnCamino||[]).forEach(function(ec){ if((ec.pedidoId||ec.id)===pedidoId){ec.proveedor=proveedor;ec.bodegaId=bodegaId;ec.bodegaNombre=bodNombre;ec.notas=notas;} }); });
+
+  // Leer los items que quedaron visibles (los eliminados ya se quitaron del DOM)
+  var rows=document.querySelectorAll('#ec-items-list [data-ec-id]');
+  var idsVisibles={}, cantidades={};
+  rows.forEach(function(row){
+    var ecId=row.getAttribute('data-ec-id');
+    idsVisibles[ecId]=true;
+    var inp=row.querySelector('.ec-item-cant');
+    cantidades[ecId]=Math.max(1, parseInt(inp.value)||1);
+  });
+
+  productos.forEach(function(p){
+    p.paquetesEnCamino=(p.paquetesEnCamino||[]).filter(function(ec){
+      if ((ec.pedidoId||ec.id)!==pedidoId) return true; // de otro pedido, no tocar
+      if (!idsVisibles[ec.id]) return false; // fue eliminado en el modal
+      ec.proveedor=proveedor; ec.bodegaId=bodegaId; ec.bodegaNombre=bodNombre; ec.notas=notas;
+      if (cantidades[ec.id]) ec.cantidad=cantidades[ec.id];
+      return true;
+    });
+  });
+
   saveAll('Pedido actualizado','✅');
-  cerrarEditCamino(); renderEnCamino();
+  cerrarEditCamino(); renderEnCamino(); renderDashboard();
 }
 
 function eliminarPedidoCamino() {
@@ -2100,14 +2138,16 @@ function confirmarVenta(sendWA) {
     if (!p) { toast('Producto no encontrado: '+item.prodNombre,'❌',true); return; }
     var st=getStock(p,item.bodegaId);
     if (item.tipo==='paquetes') {
-      if (item.esRegalo) p.paquetesRegalo=Math.max(0,(p.paquetesRegalo||0)-item.cantidad);
       st.paquetes-=item.cantidad;
+      // Si de ese stock que sale habia unidades marcadas como "regalo recibido", descontarlas del contador
+      p.paquetesRegalo=Math.max(0,(p.paquetesRegalo||0)-Math.min(item.cantidad,p.paquetesRegalo||0));
     } else {
       var tot=st.paquetes*p.presentacion+st.sobres, rest=item.cantidad;
       if (tot>=rest) {
         var usarSueltos=Math.min(st.sobres,rest); st.sobres-=usarSueltos; rest-=usarSueltos;
         while (rest>0&&st.paquetes>0){st.paquetes--;st.sobres+=p.presentacion;var usar=Math.min(st.sobres,rest);st.sobres-=usar;rest-=usar;}
       } else { st.sobres-=item.cantidad; }
+      p.sobresRegalo=Math.max(0,(p.sobresRegalo||0)-Math.min(item.cantidad,p.sobresRegalo||0));
     }
     p.paquetesEnBodega=totalPaquetes(p);
     p.sobresSueltos=totalSobres(p);
@@ -2262,13 +2302,72 @@ function closeEdit() {
 }
 function editOverlayClick(e) { if(!document.getElementById('editModalInner').contains(e.target)) closeEdit(); }
 
+function revertirMovimiento(m) {
+  var p = m.prodId ? productos.find(function(x){return x.id===m.prodId;}) : null;
+
+  if (m.tipo==='entrada' || m.tipo==='entrada_directa') {
+    // Si fue directo a bodega, quitar ese stock. Si fue a "en camino" y ya no esta ahi (fue recibido), no tocar stock aqui.
+    if (p && m.bodegaId) {
+      var st=getStock(p,m.bodegaId);
+      st.paquetes=Math.max(0,(st.paquetes||0)-m.cantidad);
+      if (m.esRegalo) p.paquetesRegalo=Math.max(0,(p.paquetesRegalo||0)-m.cantidad);
+      p.paquetesEnBodega=totalPaquetes(p);
+    }
+    // Si seguia en camino (no recibido aun), quitarlo de paquetesEnCamino tambien
+    if (p && m.entradaId) {
+      p.paquetesEnCamino=(p.paquetesEnCamino||[]).filter(function(ec){return ec.id!==m.entradaId;});
+    }
+  } else if (m.tipo==='entrada_sobres') {
+    if (p && m.bodegaId) {
+      var sst=getStock(p,m.bodegaId);
+      sst.sobres=Math.max(0,(sst.sobres||0)-m.cantidad);
+      if (m.esRegalo) p.sobresRegalo=Math.max(0,(p.sobresRegalo||0)-m.cantidad);
+      p.sobresSueltos=totalSobres(p);
+    }
+  } else if (m.tipo==='recibido') {
+    // Quitar el stock que se sumo al recibir
+    if (p && m.bodegaId) {
+      var rst=getStock(p,m.bodegaId);
+      rst.paquetes=Math.max(0,(rst.paquetes||0)-m.cantidad);
+      if (m.esRegalo) p.paquetesRegalo=Math.max(0,(p.paquetesRegalo||0)-m.cantidad);
+      p.paquetesEnBodega=totalPaquetes(p);
+    }
+  } else if (m.tipo==='venta' || m.tipo==='salida') {
+    // Devolver el stock vendido de cada item
+    if (m.items && m.items.length) {
+      m.items.forEach(function(it) {
+        var pi=productos.find(function(x){return x.id===it.prodId;});
+        if (!pi || !it.bodegaId) return;
+        var st=getStock(pi,it.bodegaId);
+        if (it.tipoCantidad==='paquetes') st.paquetes=(st.paquetes||0)+it.cantidad;
+        else st.sobres=(st.sobres||0)+it.cantidad;
+        pi.paquetesEnBodega=totalPaquetes(pi); pi.sobresSueltos=totalSobres(pi);
+      });
+    } else if (p && m.bodegaId) {
+      var vst=getStock(p,m.bodegaId);
+      if (m.tipoCantidad==='paquetes') vst.paquetes=(vst.paquetes||0)+m.cantidad;
+      else vst.sobres=(vst.sobres||0)+m.cantidad;
+      p.paquetesEnBodega=totalPaquetes(p); p.sobresSueltos=totalSobres(p);
+    }
+  } else if (m.tipo==='traslado') {
+    // Devolver de destino a origen
+    if (p && m.bodegaId && m.bodegaDestinoId) {
+      var stOr=getStock(p,m.bodegaId), stDe=getStock(p,m.bodegaDestinoId);
+      if (m.tipoCantidad==='paquetes') { stDe.paquetes=Math.max(0,(stDe.paquetes||0)-m.cantidad); stOr.paquetes=(stOr.paquetes||0)+m.cantidad; }
+      else { stDe.sobres=Math.max(0,(stDe.sobres||0)-m.cantidad); stOr.sobres=(stOr.sobres||0)+m.cantidad; }
+      p.paquetesEnBodega=totalPaquetes(p); p.sobresSueltos=totalSobres(p);
+    }
+  }
+}
+
 function eliminarMovimiento(id) {
   var m=movimientos.find(function(x){return x.id===id;});
   if (!m) return;
-  showConfirm('Eliminar registro','¿Eliminar este movimiento del historial?',function() {
+  showConfirm('Eliminar registro','¿Eliminar este movimiento? Se revertirá el stock, costos y ganancias asociadas, como si nunca hubiera ocurrido.',function() {
+    revertirMovimiento(m);
     movimientos=movimientos.filter(function(x){return x.id!==id;});
-    saveAll('Registro eliminado','🗑');
-    renderHistorial(); renderDashboard();
+    saveAll('Registro eliminado y revertido','🗑');
+    renderHistorial(); renderDashboard(); renderInventory();
   });
 }
 
