@@ -2372,70 +2372,90 @@ function closeEdit() {
 }
 function editOverlayClick(e) { if(!document.getElementById('editModalInner').contains(e.target)) closeEdit(); }
 
-function revertirMovimiento(m) {
-  var p = m.prodId ? productos.find(function(x){return x.id===m.prodId;}) : null;
+function recalcularStockDesdeMovimientos() {
+  // Resetear todo el stock a 0
+  productos.forEach(function(p) {
+    p.stockPorBodega = {};
+    bodegas.forEach(function(b) { p.stockPorBodega[b.id] = {paquetes:0, sobres:0}; });
+    p.paquetesEnBodega = 0;
+    p.sobresSueltos = 0;
+    p.paquetesRegalo = 0;
+    p.sobresRegalo = 0;
+    p.paquetesEnCamino = (p.paquetesEnCamino||[]).filter(function(ec) {
+      // Quitar entradas en camino que tienen movimiento en historial
+      return !movimientos.find(function(m){ return m.entradaId === ec.id; });
+    });
+  });
 
-  if (m.tipo==='entrada' || m.tipo==='entrada_directa') {
-    // Si fue directo a bodega, quitar ese stock. Si fue a "en camino" y ya no esta ahi (fue recibido), no tocar stock aqui.
-    if (p && m.bodegaId) {
-      var st=getStock(p,m.bodegaId);
-      st.paquetes=Math.max(0,(st.paquetes||0)-m.cantidad);
-      if (m.esRegalo) p.paquetesRegalo=Math.max(0,(p.paquetesRegalo||0)-m.cantidad);
-      p.paquetesEnBodega=totalPaquetes(p);
+  // Reconstruir el stock aplicando cada movimiento en orden cronológico
+  var movOrden = movimientos.slice().sort(function(a,b){return a.ts-b.ts;});
+  movOrden.forEach(function(m) {
+    var p = m.prodId ? productos.find(function(x){return x.id===m.prodId;}) : null;
+
+    if (m.tipo==='entrada_directa' || m.tipo==='entrada') {
+      if (p && m.bodegaId) {
+        var st=getStock(p,m.bodegaId);
+        st.paquetes=(st.paquetes||0)+m.cantidad;
+        if (m.esRegalo) p.paquetesRegalo=(p.paquetesRegalo||0)+m.cantidad;
+        p.paquetesEnBodega=totalPaquetes(p);
+      }
+    } else if (m.tipo==='entrada_sobres') {
+      if (p && m.bodegaId) {
+        var sst=getStock(p,m.bodegaId);
+        sst.sobres=(sst.sobres||0)+m.cantidad;
+        if (m.esRegalo) p.sobresRegalo=(p.sobresRegalo||0)+m.cantidad;
+        p.sobresSueltos=totalSobres(p);
+      }
+    } else if (m.tipo==='recibido') {
+      if (p && m.bodegaId) {
+        var rst=getStock(p,m.bodegaId);
+        rst.paquetes=(rst.paquetes||0)+m.cantidad;
+        if (m.esRegalo) p.paquetesRegalo=(p.paquetesRegalo||0)+m.cantidad;
+        p.paquetesEnBodega=totalPaquetes(p);
+      }
+    } else if (m.tipo==='venta' || m.tipo==='salida') {
+      if (m.items && m.items.length) {
+        m.items.forEach(function(it) {
+          var pi=productos.find(function(x){return x.id===it.prodId;});
+          if (!pi||!it.bodegaId) return;
+          var st=getStock(pi,it.bodegaId);
+          if (it.tipoCantidad==='paquetes') {
+            st.paquetes=Math.max(0,(st.paquetes||0)-it.cantidad);
+            if (it.esRegalo) pi.paquetesRegalo=Math.max(0,(pi.paquetesRegalo||0)-it.cantidad);
+          } else {
+            st.sobres=Math.max(0,(st.sobres||0)-it.cantidad);
+            if (it.esRegalo) pi.sobresRegalo=Math.max(0,(pi.sobresRegalo||0)-it.cantidad);
+          }
+          pi.paquetesEnBodega=totalPaquetes(pi); pi.sobresSueltos=totalSobres(pi);
+        });
+      } else if (p && m.bodegaId) {
+        var vst=getStock(p,m.bodegaId);
+        if (m.tipoCantidad==='paquetes') vst.paquetes=Math.max(0,(vst.paquetes||0)-m.cantidad);
+        else vst.sobres=Math.max(0,(vst.sobres||0)-m.cantidad);
+        p.paquetesEnBodega=totalPaquetes(p); p.sobresSueltos=totalSobres(p);
+      }
+    } else if (m.tipo==='traslado') {
+      if (p && m.bodegaId && m.bodegaDestinoId) {
+        var stOr=getStock(p,m.bodegaId), stDe=getStock(p,m.bodegaDestinoId);
+        if (m.tipoCantidad==='paquetes') {
+          stOr.paquetes=Math.max(0,(stOr.paquetes||0)-m.cantidad);
+          stDe.paquetes=(stDe.paquetes||0)+m.cantidad;
+        } else {
+          stOr.sobres=Math.max(0,(stOr.sobres||0)-m.cantidad);
+          stDe.sobres=(stDe.sobres||0)+m.cantidad;
+        }
+        p.paquetesEnBodega=totalPaquetes(p); p.sobresSueltos=totalSobres(p);
+      }
     }
-    // Si seguia en camino (no recibido aun), quitarlo de paquetesEnCamino tambien
-    if (p && m.entradaId) {
-      p.paquetesEnCamino=(p.paquetesEnCamino||[]).filter(function(ec){return ec.id!==m.entradaId;});
-    }
-  } else if (m.tipo==='entrada_sobres') {
-    if (p && m.bodegaId) {
-      var sst=getStock(p,m.bodegaId);
-      sst.sobres=Math.max(0,(sst.sobres||0)-m.cantidad);
-      if (m.esRegalo) p.sobresRegalo=Math.max(0,(p.sobresRegalo||0)-m.cantidad);
-      p.sobresSueltos=totalSobres(p);
-    }
-  } else if (m.tipo==='recibido') {
-    // Quitar el stock que se sumo al recibir
-    if (p && m.bodegaId) {
-      var rst=getStock(p,m.bodegaId);
-      rst.paquetes=Math.max(0,(rst.paquetes||0)-m.cantidad);
-      if (m.esRegalo) p.paquetesRegalo=Math.max(0,(p.paquetesRegalo||0)-m.cantidad);
-      p.paquetesEnBodega=totalPaquetes(p);
-    }
-  } else if (m.tipo==='venta' || m.tipo==='salida') {
-    // Devolver el stock vendido de cada item
-    if (m.items && m.items.length) {
-      m.items.forEach(function(it) {
-        var pi=productos.find(function(x){return x.id===it.prodId;});
-        if (!pi || !it.bodegaId) return;
-        var st=getStock(pi,it.bodegaId);
-        if (it.tipoCantidad==='paquetes') st.paquetes=(st.paquetes||0)+it.cantidad;
-        else st.sobres=(st.sobres||0)+it.cantidad;
-        pi.paquetesEnBodega=totalPaquetes(pi); pi.sobresSueltos=totalSobres(pi);
-      });
-    } else if (p && m.bodegaId) {
-      var vst=getStock(p,m.bodegaId);
-      if (m.tipoCantidad==='paquetes') vst.paquetes=(vst.paquetes||0)+m.cantidad;
-      else vst.sobres=(vst.sobres||0)+m.cantidad;
-      p.paquetesEnBodega=totalPaquetes(p); p.sobresSueltos=totalSobres(p);
-    }
-  } else if (m.tipo==='traslado') {
-    // Devolver de destino a origen
-    if (p && m.bodegaId && m.bodegaDestinoId) {
-      var stOr=getStock(p,m.bodegaId), stDe=getStock(p,m.bodegaDestinoId);
-      if (m.tipoCantidad==='paquetes') { stDe.paquetes=Math.max(0,(stDe.paquetes||0)-m.cantidad); stOr.paquetes=(stOr.paquetes||0)+m.cantidad; }
-      else { stDe.sobres=Math.max(0,(stDe.sobres||0)-m.cantidad); stOr.sobres=(stOr.sobres||0)+m.cantidad; }
-      p.paquetesEnBodega=totalPaquetes(p); p.sobresSueltos=totalSobres(p);
-    }
-  }
+  });
 }
 
 function eliminarMovimiento(id) {
   var m=movimientos.find(function(x){return x.id===id;});
   if (!m) return;
-  showConfirm('Eliminar registro','¿Eliminar este movimiento? Se revertirá el stock, costos y ganancias asociadas, como si nunca hubiera ocurrido.',function() {
-    revertirMovimiento(m);
+  showConfirm('Eliminar registro','¿Eliminar este movimiento? Se revertirá el stock como si nunca hubiera ocurrido.',function() {
     movimientos=movimientos.filter(function(x){return x.id!==id;});
+    recalcularStockDesdeMovimientos();
     saveAll('Registro eliminado y revertido','🗑');
     renderHistorial(); renderDashboard(); renderInventory();
   });
@@ -2517,8 +2537,8 @@ function renderHistorial() {
     if (delGrupo) {
       var ids=delGrupo.getAttribute('data-ids').split(',');
       showConfirm('Eliminar pedido','¿Eliminar este pedido completo ('+ids.length+' productos)? Se revertirá el stock como si nunca hubiera ocurrido.',function(){
-        ids.forEach(function(id){ var m=movimientos.find(function(x){return x.id===id;}); if(m) revertirMovimiento(m); });
         movimientos=movimientos.filter(function(m){return ids.indexOf(m.id)===-1;});
+        recalcularStockDesdeMovimientos();
         saveAll('Pedido eliminado y revertido','🗑');
         renderHistorial(); renderDashboard(); renderInventory();
       });
@@ -3016,6 +3036,7 @@ window.editarMovimiento = editarMovimiento;
 window.guardarEdicion = guardarEdicion;
 window.closeEdit = closeEdit;
 window.editOverlayClick = editOverlayClick;
+window.recalcularStockDesdeMovimientos = recalcularStockDesdeMovimientos;
 window.eliminarMovimiento = eliminarMovimiento;
 window.renderHistorial = renderHistorial;
 window.verDetalleMovimiento = verDetalleMovimiento;
