@@ -1777,7 +1777,7 @@ function renderDashboard() {
   var regalosEnCamino = productos.reduce(function(a,p){ return a+(p.paquetesEnCamino||[]).reduce(function(s,ec){return s+(ec.esRegalo?(ec.cantidad||0):0);},0); },0);
   var hayRegalos = regPaq>0 || regSob>0 || regalosEnCamino>0;
   document.getElementById('stat-regalos-paq').textContent = regPaq;
-  document.getElementById('stat-regalos-paq-sub').textContent = regPaq===1?'paquete':'paquetes';
+  document.getElementById('stat-regalos-paq-sub').textContent = regPaq===1?'paquete sellado':'paquetes sellados';
   document.getElementById('stat-regalos-sob').textContent = regSob;
   document.getElementById('stat-regalos-sob-wrap').style.display = regSob>0 ? 'block' : 'none';
   document.getElementById('stat-regalos-sub').textContent = !hayRegalos ? 'sin regalos disponibles' : (regalosEnCamino>0 ? regalosEnCamino+' paq. en camino' : '');
@@ -2207,17 +2207,35 @@ function confirmarVenta(sendWA) {
     var p=productos.find(function(x){return x.id===item.prodId;});
     if (!p) { toast('Producto no encontrado: '+item.prodNombre,'❌',true); return; }
     var st=getStock(p,item.bodegaId);
+
     if (item.tipo==='paquetes') {
       st.paquetes-=item.cantidad;
-      // Solo descontar del contador de regalos recibidos si esta salida ES un regalo
       if (item.esRegalo) p.paquetesRegalo=Math.max(0,(p.paquetesRegalo||0)-item.cantidad);
     } else {
+      // Descontar sobres del stock general (abriendo paquetes normales si es necesario)
       var tot=st.paquetes*p.presentacion+st.sobres, rest=item.cantidad;
       if (tot>=rest) {
         var usarSueltos=Math.min(st.sobres,rest); st.sobres-=usarSueltos; rest-=usarSueltos;
         while (rest>0&&st.paquetes>0){st.paquetes--;st.sobres+=p.presentacion;var usar=Math.min(st.sobres,rest);st.sobres-=usar;rest-=usar;}
       } else { st.sobres-=item.cantidad; }
-      if (item.esRegalo) p.sobresRegalo=Math.max(0,(p.sobresRegalo||0)-item.cantidad);
+
+      if (item.esRegalo) {
+        // Descontar del pool de regalo: primero de sobresRegalo sueltos,
+        // si no alcanzan abrir paquetesRegalo automáticamente (cada uno = p.presentacion sobres)
+        var restRegalo=item.cantidad;
+        var sobRegSueltos=p.sobresRegalo||0;
+        var usarSobReg=Math.min(sobRegSueltos,restRegalo);
+        p.sobresRegalo=sobRegSueltos-usarSobReg;
+        restRegalo-=usarSobReg;
+        // Si faltan sobres de regalo, abrir paquetes de regalo
+        while (restRegalo>0 && (p.paquetesRegalo||0)>0) {
+          p.paquetesRegalo=p.paquetesRegalo-1;
+          p.sobresRegalo=(p.sobresRegalo||0)+(p.presentacion||28);
+          var tomarAhora=Math.min(p.sobresRegalo,restRegalo);
+          p.sobresRegalo-=tomarAhora;
+          restRegalo-=tomarAhora;
+        }
+      }
     }
     p.paquetesEnBodega=totalPaquetes(p);
     p.sobresSueltos=totalSobres(p);
@@ -2424,7 +2442,16 @@ function recalcularStockDesdeMovimientos() {
             if (it.esRegalo) pi.paquetesRegalo=Math.max(0,(pi.paquetesRegalo||0)-it.cantidad);
           } else {
             st.sobres=Math.max(0,(st.sobres||0)-it.cantidad);
-            if (it.esRegalo) pi.sobresRegalo=Math.max(0,(pi.sobresRegalo||0)-it.cantidad);
+            if (it.esRegalo) {
+              var rr=it.cantidad;
+              var sr=pi.sobresRegalo||0;
+              var usar=Math.min(sr,rr); pi.sobresRegalo=sr-usar; rr-=usar;
+              while (rr>0&&(pi.paquetesRegalo||0)>0){
+                pi.paquetesRegalo--;
+                pi.sobresRegalo=(pi.sobresRegalo||0)+(pi.presentacion||28);
+                var t=Math.min(pi.sobresRegalo,rr); pi.sobresRegalo-=t; rr-=t;
+              }
+            }
           }
           pi.paquetesEnBodega=totalPaquetes(pi); pi.sobresSueltos=totalSobres(pi);
         });
