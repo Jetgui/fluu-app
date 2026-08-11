@@ -350,8 +350,17 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
     </div>
     <div class="stat-card" style="border-color:rgba(249,199,79,0.4);background:linear-gradient(135deg,rgba(249,199,79,0.08),rgba(249,199,79,0.02));grid-column:1/-1">
       <div class="stat-label" style="color:#f9c74f">🎁 Regalos disponibles</div>
-      <div class="stat-value" id="stat-regalos" style="color:#f9c74f;font-size:1.6rem">0</div>
-      <div class="stat-sub" id="stat-regalos-sub">paquetes de regalo</div>
+      <div style="display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap">
+        <div>
+          <div class="stat-value" id="stat-regalos-paq" style="color:#f9c74f;font-size:1.6rem">0</div>
+          <div class="stat-sub" id="stat-regalos-paq-sub">paquetes</div>
+        </div>
+        <div id="stat-regalos-sob-wrap">
+          <div class="stat-value" id="stat-regalos-sob" style="color:#f9c74f;font-size:1.6rem">0</div>
+          <div class="stat-sub">sobres</div>
+        </div>
+      </div>
+      <div class="stat-sub" id="stat-regalos-sub" style="margin-top:4px"></div>
     </div>
   </div>
   <div id="dash-bodegas-wrap" style="display:none;margin-bottom:14px">
@@ -1763,10 +1772,15 @@ function renderDashboard() {
   document.getElementById('stat-sobres').textContent   = productos.reduce(function(a,p){ return a+totalSobres(p); },0);
   document.getElementById('stat-camino').textContent   = productos.reduce(function(a,p){ return a+(p.paquetesEnCamino||[]).reduce(function(x,y){return x+y.cantidad;},0); },0);
 
-  var regalosEnBodega = productos.reduce(function(a,p){ return a+(p.paquetesRegalo||0)+(p.sobresRegalo||0); },0);
+  var regPaq = productos.reduce(function(a,p){ return a+(p.paquetesRegalo||0); },0);
+  var regSob = productos.reduce(function(a,p){ return a+(p.sobresRegalo||0); },0);
   var regalosEnCamino = productos.reduce(function(a,p){ return a+(p.paquetesEnCamino||[]).reduce(function(s,ec){return s+(ec.esRegalo?(ec.cantidad||0):0);},0); },0);
-  document.getElementById('stat-regalos').textContent = regalosEnBodega;
-  document.getElementById('stat-regalos-sub').textContent = regalosEnBodega>0 ? (regalosEnCamino>0?regalosEnBodega+' listos · '+regalosEnCamino+' en camino':'paquetes de regalo listos') : (regalosEnCamino>0?regalosEnCamino+' en camino':'sin regalos disponibles');
+  var hayRegalos = regPaq>0 || regSob>0 || regalosEnCamino>0;
+  document.getElementById('stat-regalos-paq').textContent = regPaq;
+  document.getElementById('stat-regalos-paq-sub').textContent = regPaq===1?'paquete':'paquetes';
+  document.getElementById('stat-regalos-sob').textContent = regSob;
+  document.getElementById('stat-regalos-sob-wrap').style.display = regSob>0 ? 'block' : 'none';
+  document.getElementById('stat-regalos-sub').textContent = !hayRegalos ? 'sin regalos disponibles' : (regalosEnCamino>0 ? regalosEnCamino+' paq. en camino' : '');
 
   var ahora=new Date(), inicioMes=new Date(ahora.getFullYear(),ahora.getMonth(),1).getTime();
   var paqMes=0, sobMes=0, paqRegMes=0, sobRegMes=0;
