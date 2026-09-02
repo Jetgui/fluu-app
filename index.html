@@ -675,9 +675,9 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
   </div>
   <div class="gan-grid">
     <div class="gan-card" style="grid-column:1/-1;border:1px solid rgba(91,164,245,0.35);background:rgba(91,164,245,0.07)">
-      <div class="stat-label" style="color:#5ba4f5">📦 Inversión en stock</div>
+      <div class="stat-label" style="color:#5ba4f5">📦 Invertido en compras</div>
       <div class="stat-value" id="gan-inversion" style="color:#5ba4f5;font-size:1.7rem">$0</div>
-      <div class="stat-sub" id="gan-inversion-sub">compras de producto en el período</div>
+      <div class="stat-sub" id="gan-inversion-sub">producto + flete pagado al proveedor en el período</div>
     </div>
     <div class="gan-card" style="border-color:rgba(0,229,160,0.3)">
       <div class="stat-label">Ingresos</div>
@@ -712,7 +712,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
     <div class="gan-card" style="grid-column:1/-1;border:1px solid var(--accent);background:rgba(0,229,160,0.06)">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
         <div>
-          <div class="stat-label" style="color:var(--accent)">🐷 Ahorro (10%)</div>
+          <div class="stat-label" style="color:var(--accent)">🐷 Ahorro (10% de ganancia neta)</div>
           <div class="stat-value" id="gan-ahorro" style="color:var(--accent);font-size:1.7rem">$0</div>
           <div class="stat-sub" id="gan-ahorro-sub">aparta este monto</div>
         </div>
@@ -2637,11 +2637,16 @@ function calcGanancias() {
   var totI=0, totC=0, totG=0;
   ventas.forEach(function(v){totI+=v.precioTotal||0;totC+=v.costoTotal||0;totG+=v.ganancia||0;});
 
-  var valorStock=productos.reduce(function(acc,p){var cp=toNum(p.costoPaquete),cs=toNum(p.costoPorSobre),paq=Math.max(0,totalPaquetes(p)-(p.paquetesRegalo||0)),sob=Math.max(0,totalSobres(p)-(p.sobresRegalo||0)),ec=(p.paquetesEnCamino||[]).reduce(function(a,b){return a+(b.esRegalo?0:(b.cantidad||0));},0);return acc+(cp*paq)+(cs*sob)+(cp*ec);},0);
-  var totFlete=movimientos.filter(function(m){return (m.tipo==='entrada'||m.tipo==='entrada_directa'||m.tipo==='entrada_sobres')&&m.ts>=desdets&&m.ts<=hastats;}).reduce(function(a,m){return a+(m.fleteAsignado||0);},0);
-  var totInv=valorStock+totC+totFlete;
+  // Inversión = lo que pagaste al proveedor en el período (producto + flete)
+  var entradasPeriodo=movimientos.filter(function(m){
+    return (m.tipo==='entrada'||m.tipo==='entrada_directa'||m.tipo==='entrada_sobres'||m.tipo==='recibido')&&m.ts>=desdets&&m.ts<=hastats;
+  });
+  var totInvProducto=entradasPeriodo.reduce(function(a,m){return a+(m.inversionTotal||0);},0);
+  var totInvFlete=entradasPeriodo.reduce(function(a,m){return a+(m.fleteAsignado||0);},0);
+  var totInv=totInvProducto+totInvFlete;
 
   document.getElementById('gan-inversion').textContent=fmt(totInv);
+  document.getElementById('gan-inversion').title='Producto: '+fmt(totInvProducto)+' · Flete: '+fmt(totInvFlete);
   document.getElementById('gan-ingresos').textContent=fmt(totI);
   document.getElementById('gan-costo').textContent=fmt(totC);
   document.getElementById('gan-neta').textContent=fmt(totG);
@@ -2658,10 +2663,11 @@ function calcGanancias() {
   document.getElementById('gan-real').style.color=ganReal>=0?'var(--accent3)':'#ff4444';
   document.getElementById('gan-real-sub').textContent=fmt(totG)+' ventas − '+fmt(totGastos)+' operativos';
 
-  var ahorro=ganReal*0.10;
+  // Ahorro = 10% de ganancia NETA (no de la real), fijo por venta sin importar gastos
+  var ahorro=totG*0.10;
   document.getElementById('gan-ahorro').textContent=fmt(ahorro>0?ahorro:0);
-  document.getElementById('gan-ahorro').style.color=ganReal>=0?'var(--accent)':'#ff4444';
-  document.getElementById('gan-ahorro-sub').textContent=ganReal>=0?'aparta este monto de '+fmt(ganReal):'ganancia negativa en el período';
+  document.getElementById('gan-ahorro').style.color=totG>=0?'var(--accent)':'#ff4444';
+  document.getElementById('gan-ahorro-sub').textContent=totG>=0?'10% de '+fmt(totG)+' ganancia neta':'ganancia negativa en el período';
 
   var totalCajas=0, totalSobresV=0;
   ventas.forEach(function(v){ if(v.tipo==='venta'&&v.items) v.items.forEach(function(it){if(it.tipoCantidad==='paquetes')totalCajas+=it.cantidad;else totalSobresV+=it.cantidad;}); else{if(v.tipoCantidad==='paquetes')totalCajas+=v.cantidad||0;else totalSobresV+=v.cantidad||0;} });
