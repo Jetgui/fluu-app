@@ -689,11 +689,24 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
       <div class="stat-value" id="gan-costo" style="color:var(--accent2);font-size:1.6rem">$0</div>
       <div class="stat-sub">costo de lo vendido</div>
     </div>
+    <!-- PASO 1: Ganancia neta -->
     <div class="gan-card" style="grid-column:1/-1;border-color:rgba(123,108,255,0.3)">
       <div class="stat-label">Ganancia neta</div>
       <div class="stat-value" id="gan-neta" style="color:var(--accent3);font-size:1.9rem">$0</div>
       <div class="stat-sub" id="gan-margen">Margen 0%</div>
     </div>
+    <!-- PASO 2: Ahorro (sale de la ganancia neta, antes de gastos) -->
+    <div class="gan-card" style="grid-column:1/-1;border:1px solid var(--accent);background:rgba(0,229,160,0.06)">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div>
+          <div class="stat-label" style="color:var(--accent)">🐷 Ahorro (10% de ganancia neta)</div>
+          <div class="stat-value" id="gan-ahorro" style="color:var(--accent);font-size:1.7rem">$0</div>
+          <div class="stat-sub" id="gan-ahorro-sub">aparta este monto</div>
+        </div>
+        <div style="font-size:2.2rem;opacity:0.4">🐷</div>
+      </div>
+    </div>
+    <!-- PASO 3: Costos operativos -->
     <div class="gan-card" style="grid-column:1/-1;border:1px solid rgba(255,68,68,0.3);background:rgba(255,68,68,0.06)">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
         <div>
@@ -704,20 +717,11 @@ html,body{background:var(--bg);color:var(--text);font-family:'Manrope',-apple-sy
         <button data-action="goTo" data-arg="gastos" style="background:rgba(255,107,107,0.15);border:1px solid rgba(255,107,107,0.3);border-radius:10px;color:#ff6b6b;font-size:0.8rem;padding:8px 14px;cursor:pointer;font-family:'Manrope',sans-serif;white-space:nowrap">+ Agregar</button>
       </div>
     </div>
-    <div class="gan-card" style="grid-column:1/-1;border:1px solid var(--accent3)">
-      <div class="stat-label">💡 Ganancia real</div>
+    <!-- PASO 4: Ganancia final (ganancia neta - ahorro - costos operativos) -->
+    <div class="gan-card" style="grid-column:1/-1;border:1px solid var(--accent3);background:rgba(123,108,255,0.06)">
+      <div class="stat-label" style="color:var(--accent3)">🏆 Ganancia final</div>
       <div class="stat-value" id="gan-real" style="font-size:1.9rem">$0</div>
-      <div class="stat-sub" id="gan-real-sub">ventas − costo producto − costos operativos</div>
-    </div>
-    <div class="gan-card" style="grid-column:1/-1;border:1px solid var(--accent);background:rgba(0,229,160,0.06)">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <div>
-          <div class="stat-label" style="color:var(--accent)">🐷 Ahorro (10% de ganancia neta)</div>
-          <div class="stat-value" id="gan-ahorro" style="color:var(--accent);font-size:1.7rem">$0</div>
-          <div class="stat-sub" id="gan-ahorro-sub">aparta este monto</div>
-        </div>
-        <div style="font-size:2.2rem;opacity:0.4">🐷</div>
-      </div>
+      <div class="stat-sub" id="gan-real-sub">ganancia neta − ahorro − costos operativos</div>
     </div>
   </div>
   <div class="card">
@@ -2658,16 +2662,17 @@ function calcGanancias() {
   document.getElementById('gan-op-total').textContent=fmt(totGastos);
   document.getElementById('gan-op-sub').textContent=totGastos>0?gastos.filter(function(g){return g.ts>=desdets&&g.ts<=hastats;}).length+' gasto(s) en el período':'Sin gastos en el período';
 
-  var ganReal=totG-totGastos;
-  document.getElementById('gan-real').textContent=fmt(ganReal);
-  document.getElementById('gan-real').style.color=ganReal>=0?'var(--accent3)':'#ff4444';
-  document.getElementById('gan-real-sub').textContent=fmt(totG)+' ventas − '+fmt(totGastos)+' operativos';
-
-  // Ahorro = 10% de ganancia NETA (no de la real), fijo por venta sin importar gastos
-  var ahorro=totG*0.10;
-  document.getElementById('gan-ahorro').textContent=fmt(ahorro>0?ahorro:0);
+  // Ahorro = 10% de ganancia NETA, sale antes de los costos operativos
+  var ahorro=totG>0?totG*0.10:0;
+  document.getElementById('gan-ahorro').textContent=fmt(ahorro);
   document.getElementById('gan-ahorro').style.color=totG>=0?'var(--accent)':'#ff4444';
   document.getElementById('gan-ahorro-sub').textContent=totG>=0?'10% de '+fmt(totG)+' ganancia neta':'ganancia negativa en el período';
+
+  // Ganancia final = ganancia neta - ahorro - costos operativos
+  var ganFinal=totG-ahorro-totGastos;
+  document.getElementById('gan-real').textContent=fmt(ganFinal);
+  document.getElementById('gan-real').style.color=ganFinal>=0?'var(--accent3)':'#ff4444';
+  document.getElementById('gan-real-sub').textContent=fmt(totG)+' neta − '+fmt(ahorro)+' ahorro − '+fmt(totGastos)+' operativos';
 
   var totalCajas=0, totalSobresV=0;
   ventas.forEach(function(v){ if(v.tipo==='venta'&&v.items) v.items.forEach(function(it){if(it.tipoCantidad==='paquetes')totalCajas+=it.cantidad;else totalSobresV+=it.cantidad;}); else{if(v.tipoCantidad==='paquetes')totalCajas+=v.cantidad||0;else totalSobresV+=v.cantidad||0;} });
