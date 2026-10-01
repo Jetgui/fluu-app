@@ -35,6 +35,7 @@
   --shadow-md: 0 4px 24px rgba(124,92,191,0.14);
   --top-h:     60px;
   --sidebar-w: 220px;
+  --sidebar-w-mobile: 260px;
 }
 
 /* Paletas alternativas */
@@ -168,11 +169,14 @@ a { color: var(--accent); text-decoration: none; }
 }
 .login-card {
   background: var(--surface);
-  border-radius: 28px;
-  padding: 44px 40px;
+  border-radius: 24px;
+  padding: 32px 24px;
   box-shadow: var(--shadow-md);
   width: 100%; max-width: 400px;
   border: 1px solid var(--border);
+}
+@media (min-width: 600px) {
+  .login-card { padding: 44px 40px; border-radius: 28px; }
 }
 .login-logo {
   display: flex; align-items: center; gap: 10px; margin-bottom: 28px;
@@ -266,15 +270,18 @@ a { color: var(--accent); text-decoration: none; }
 #topbar {
   position: fixed; top: 0; left: 0; right: 0; height: var(--top-h);
   background: var(--surface); z-index: 100;
-  display: flex; align-items: center; padding: 0 16px 0 0;
+  display: flex; align-items: center; padding: 0 12px 0 0;
   border-bottom: 1px solid var(--border);
   box-shadow: 0 1px 8px rgba(124,92,191,0.06);
+  overflow: hidden;
 }
 #topbar-logo {
   width: var(--sidebar-w); flex-shrink: 0;
-  display: flex; align-items: center; gap: 10px; padding: 0 20px;
+  display: flex; align-items: center; gap: 8px; padding: 0 16px;
 }
-@media (max-width: 768px) { #topbar-logo { width: auto; } }
+@media (max-width: 768px) {
+  #topbar-logo { width: auto; padding: 0 8px; }
+}
 .topbar-logo-icon {
   width: 36px; height: 36px;
   background: linear-gradient(135deg, var(--accent), var(--accent-light));
@@ -293,9 +300,14 @@ a { color: var(--accent); text-decoration: none; }
   padding: 8px; border-radius: 10px; margin-right: 8px;
 }
 @media (max-width: 768px) { #menu-toggle { display: block; } }
-#topbar-center { flex: 1; }
-#dateDisplay { font-size: 0.82rem; font-weight: 700; color: var(--muted); }
-#topbar-right { display: flex; align-items: center; gap: 8px; }
+#topbar-center { flex: 1; min-width: 0; overflow: hidden; }
+#dateDisplay {
+  font-size: 0.75rem; font-weight: 700; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 0 8px;
+}
+@media (max-width: 480px) { #dateDisplay { display: none; } }
+#topbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .topbar-btn {
   width: 36px; height: 36px; border-radius: 10px;
   background: var(--surface2); border: 1px solid var(--border);
@@ -331,7 +343,7 @@ a { color: var(--accent); text-decoration: none; }
   transition: transform 0.3s ease;
 }
 @media (max-width: 768px) {
-  #sidebar { transform: translateX(-100%); }
+  #sidebar { transform: translateX(-100%); width: var(--sidebar-w-mobile); }
   #sidebar.open { transform: translateX(0); box-shadow: var(--shadow-md); }
 }
 #sidebar-overlay {
@@ -411,7 +423,10 @@ a { color: var(--accent); text-decoration: none; }
   transition: margin-left 0.3s;
 }
 @media (max-width: 768px) {
-  #app-body { margin-left: 0; padding: 16px; }
+  #app-body { margin-left: 0; padding: 12px; }
+}
+@media (max-width: 400px) {
+  #app-body { padding: 10px 8px; }
 }
 
 /* Page */
@@ -455,7 +470,11 @@ a { color: var(--accent); text-decoration: none; }
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px; margin-bottom: 16px;
+  gap: 10px; margin-bottom: 16px;
+}
+@media (max-width: 400px) {
+  .stat-grid { gap: 8px; }
+  .stat-value { font-size: 1.6rem; }
 }
 .stat-card {
   background: var(--surface);
@@ -500,8 +519,12 @@ a { color: var(--accent); text-decoration: none; }
   margin-bottom: 4px;
 }
 .dash-welcome-name {
-  font-size: 1.5rem; font-weight: 900; color: #fff;
+  font-size: 1.3rem; font-weight: 900; color: #fff;
   margin-bottom: 6px;
+}
+@media (max-width: 400px) {
+  .dash-welcome-name { font-size: 1.1rem; }
+  .dash-welcome { padding: 16px; }
 }
 .dash-welcome-date {
   font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.70);
@@ -588,7 +611,10 @@ select.form-input { cursor: pointer; }
 
 /* Ganancias */
 .gan-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;
+}
+@media (max-width: 480px) {
+  .gan-grid { grid-template-columns: 1fr; }
 }
 .gan-card {
   background: var(--surface); border-radius: 16px; padding: 18px;
@@ -677,7 +703,11 @@ select.form-input { cursor: pointer; }
   margin-bottom: 12px;
 }
 .inv-card-header {
-  display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+@media (max-width: 400px) {
+  .inv-card { padding: 12px; }
+  .inv-card-header { gap: 8px; margin-bottom: 8px; }
 }
 .inv-product-icon {
   width: 44px; height: 44px; border-radius: 12px;
@@ -1761,6 +1791,23 @@ tr:hover td { background: var(--accent-soft); }
   </div>
 
   <div class="card">
+    <div class="card-title">📅 Alertas de seguimiento</div>
+    <div style="font-size:0.85rem;color:var(--text2);margin-bottom:14px;font-weight:600">
+      Configura cuándo aparecen las alertas de clientes en el inicio
+    </div>
+    <div class="form-group">
+      <label class="form-label">🔴 Mostrar vencidos hasta (días)</label>
+      <input class="form-input" type="number" id="config-dias-vencidos" min="1" max="90" placeholder="Ej: 7"/>
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;font-weight:600">Clientes cuyo seguimiento venció hace X días o menos</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🟢 Avisar con anticipación (días)</label>
+      <input class="form-input" type="number" id="config-dias-previos" min="1" max="30" placeholder="Ej: 3"/>
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;font-weight:600">Clientes próximos a vencer en los próximos X días</div>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="card-title">👤 Mi cuenta</div>
     <div style="font-size:0.82rem;color:var(--muted);margin-bottom:4px;font-weight:600">Correo electrónico</div>
     <div id="config-email" style="font-weight:800;font-size:0.95rem;margin-bottom:16px;color:var(--text)"></div>
@@ -1983,6 +2030,11 @@ function actualizarNombreNegocio() {
       o.classList.toggle('active', o.getAttribute('data-avatar') === configNegocio.avatar);
     });
   }
+  // Cargar campos de seguimiento
+  var dv = document.getElementById('config-dias-vencidos');
+  var dp = document.getElementById('config-dias-previos');
+  if (dv) dv.value = configSeguimiento.diasVencidos || 7;
+  if (dp) dp.value = configSeguimiento.diasPrevios || 3;
 }
 
 function guardarConfigNegocio() {
@@ -1995,8 +2047,14 @@ function guardarConfigNegocio() {
   if (avatarActivo) configNegocio.avatar = avatarActivo.getAttribute('data-avatar');
   if (configNegocio.paleta) aplicarPaleta(configNegocio.paleta);
   if (configNegocio.avatar) aplicarAvatar(configNegocio.avatar);
+  // Guardar configuración de seguimiento
+  var dv = parseInt(document.getElementById('config-dias-vencidos').value) || 7;
+  var dp = parseInt(document.getElementById('config-dias-previos').value) || 3;
+  configSeguimiento.diasVencidos = Math.max(1, dv);
+  configSeguimiento.diasPrevios  = Math.max(1, dp);
   saveAll('Configuración guardada', '✅');
   actualizarNombreNegocio();
+  renderSeguimientos();
   toast('¡Configuración guardada!', '✅');
 }
 
@@ -2011,6 +2069,7 @@ var gastos      = [];
 var prestamos   = [];
 var carrito     = [];
 var configNegocio = { nombre: 'Fluu' };
+var configSeguimiento = { diasVencidos: 7, diasPrevios: 3 };
 var _cargaCompleta = false;
 var BODEGA_COLORS = ['#00e5a0','#ff6b35','#7b6cff'];
 
@@ -2095,7 +2154,8 @@ function saveAll(successMsg, successIcon) {
     gastos:      gastos,
     prestamos:   prestamos,
     config:      { tema: document.body.classList.contains('light') ? 'light' : 'dark' },
-    configNegocio: configNegocio
+    configNegocio: configNegocio,
+    configSeguimiento: configSeguimiento
   };
   window._saveToFirestore(payload).then(function() {
     if (successMsg) toast(successMsg, successIcon || '✅');
@@ -2617,6 +2677,54 @@ function irATraslado(id) {
 // ═══════════════════════════════════════════
 // DASHBOARD
 // ═══════════════════════════════════════════
+
+// ══════════════════════════════════════
+// SEGUIMIENTOS DE CLIENTES
+// ══════════════════════════════════════
+function renderSeguimientos() {
+  var wrap = document.getElementById('dash-seguimientos-wrap');
+  var list = document.getElementById('dash-seguimientos-list');
+  if (!wrap || !list) return;
+  var ahora = Date.now();
+  var diasV = (configSeguimiento.diasVencidos || 7) * 86400000;
+  var diasP = (configSeguimiento.diasPrevios || 3) * 86400000;
+  var pendientes = [];
+  movimientos.forEach(function(m) {
+    if (m.tipo !== 'venta' && m.tipo !== 'salida') return;
+    var fechaSeg = m.fechaSeguimiento || m.fechaSeguimientoAnticipado || 0;
+    if (!fechaSeg) return;
+    var diff = fechaSeg - ahora;
+    var diffDias = Math.round(diff / 86400000);
+    if (diff < 0 && Math.abs(diff) <= diasV) {
+      pendientes.push({m:m, diffDias:diffDias, estado:'vencido'});
+    } else if (diff >= 0 && diff <= diasP) {
+      pendientes.push({m:m, diffDias:diffDias, estado:diffDias===0?'hoy':'proximo'});
+    }
+  });
+  pendientes.sort(function(a,b){return a.diffDias-b.diffDias;});
+  if (!pendientes.length) { wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  list.innerHTML=pendientes.map(function(item){
+    var m=item.m;
+    var emoji=item.estado==='vencido'?'🔴':item.estado==='hoy'?'🟡':'🟢';
+    var textoFecha=item.estado==='vencido'?'Vencido hace '+Math.abs(item.diffDias)+' día(s)':item.estado==='hoy'?'Vence hoy':'Vence en '+item.diffDias+' día(s)';
+    var productos=m.items?m.items.map(function(it){return it.desglose;}).join(', '):(m.prodNombre||'');
+    var color=item.estado==='vencido'?'#f26b6b':item.estado==='hoy'?'#f9c74f':'var(--green)';
+    return '<div class="hist-item" data-mid="'+m.id+'" style="cursor:pointer;padding:10px 0">'+
+      '<div style="font-size:1.2rem;flex-shrink:0">'+emoji+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-weight:800;font-size:0.9rem">'+(m.cliente||'Cliente')+'</div>'+
+        '<div style="font-size:0.75rem;color:var(--muted);margin-top:2px">'+productos+'</div>'+
+      '</div>'+
+      '<div style="font-size:0.75rem;font-weight:700;color:'+color+';flex-shrink:0;text-align:right">'+textoFecha+'</div>'+
+    '</div>';
+  }).join('');
+  list.onclick=function(e){
+    var item=e.target.closest('.hist-item[data-mid]');
+    if(item){goTo('historial');setTimeout(function(){verDetalleMovimiento(item.getAttribute('data-mid'));},300);}
+  };
+}
+
 function renderDashboard() {
   var hoy = new Date();
   var fechaStr = hoy.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -3452,7 +3560,20 @@ function verDetalleMovimiento(id) {
   if (m.fleteAsignado)  html+=row('Flete de esta entrada',fmt(m.fleteAsignado),'#5ba4f5');
   if (m.descuento)      html+=row('Descuento',fmt(m.descuento));
   if (m.notas) html+=row('Notas',m.notas);
-  document.getElementById('detailModalContent').innerHTML=html;
+  if (m.fechaSeguimiento&&m.fechaSeguimiento>0) html+=row('Fecha seguimiento',new Date(m.fechaSeguimiento).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}));
+  if (m.consumoDias&&m.consumoDias>0) html+=row('Días de consumo',m.consumoDias+' días');
+  // Botón WhatsApp si hay teléfono
+  if (m.telefono) {
+    var prodTexto='';
+    if (m.items&&m.items.length) { prodTexto=m.items.map(function(it){return it.desglose;}).join(', '); }
+    else if (m.prodNombre) { prodTexto=m.prodNombre; }
+    var msg='Hola '+(m.cliente||'')+'! 😊 Te escribo para hacerte seguimiento de tu pedido de '+prodTexto+'. ¿Cómo te ha ido con el producto?';
+    var waUrl='https://wa.me/'+m.telefono.replace(/[^0-9]/g,'')+'?text='+encodeURIComponent(msg);
+    html+='<a href="'+waUrl+'" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;padding:13px;background:#25D366;border-radius:14px;color:#fff;font-weight:800;font-size:0.95rem;text-decoration:none;box-shadow:0 3px 12px rgba(37,211,102,0.35)">'+
+      '<svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.107 1.51 5.84L.057 23.428a.5.5 0 0 0 .619.611l5.701-1.496A11.947 11.947 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.882a9.876 9.876 0 0 1-5.031-1.374l-.36-.214-3.733.979.999-3.645-.235-.374A9.845 9.845 0 0 1 2.118 12C2.118 6.533 6.533 2.118 12 2.118c5.466 0 9.882 4.415 9.882 9.882 0 5.466-4.416 9.882-9.882 9.882z"/></svg>'+
+      '📱 Escribir por WhatsApp</a>';
+  }
+  document.getElementById('detailContent').innerHTML=html;
   document.getElementById('detailModal').style.display='flex';
 }
 function closeDetail() { document.getElementById('detailModal').style.display='none'; }
@@ -3922,10 +4043,12 @@ window.abrirEditPedido = abrirEditPedido;
 window.cerrarEditCamino = cerrarEditCamino;
 window.ecAgregarProducto = ecAgregarProducto;
 window.seleccionarAvatar = seleccionarAvatar;
+window.renderSeguimientos = renderSeguimientos;
 window.aplicarPaleta = aplicarPaleta;
 window.aplicarAvatar = aplicarAvatar;
 window.elegirPaleta = elegirPaleta;
 window.seleccionarAvatar = seleccionarAvatar;
+window.renderSeguimientos = renderSeguimientos;
 window.actualizarToggleTema = actualizarToggleTema;
 window.aplicarPaleta = aplicarPaleta;
 window.aplicarAvatar = aplicarAvatar;
