@@ -716,6 +716,45 @@ select.form-input { cursor: pointer; }
   font-size: 1.3rem; flex-shrink: 0;
 }
 
+/* Prod cards (inventario móvil) */
+.prod-card {
+  background: var(--surface); border-radius: 16px;
+  padding: 14px 16px; border: 1px solid var(--border);
+  box-shadow: var(--shadow); margin-bottom: 12px;
+}
+.prod-card-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; margin-bottom: 10px;
+}
+.prod-stats {
+  display: flex; gap: 0; margin-bottom: 10px;
+  background: var(--surface2); border-radius: 12px;
+  overflow: hidden; border: 1px solid var(--border);
+}
+.prod-stat {
+  flex: 1; padding: 8px 10px; text-align: center;
+  border-right: 1px solid var(--border);
+}
+.prod-stat:last-child { border-right: none; }
+.prod-stat-val {
+  font-size: 1.4rem; font-weight: 900; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.prod-stat-lbl {
+  font-size: 0.65rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px;
+}
+.badge-green {
+  background: rgba(62,207,142,0.12); color: var(--green);
+  border: 1px solid rgba(62,207,142,0.25);
+}
+.badge-red { background: rgba(242,107,107,0.12); color: var(--red); }
+.badge-yellow { background: rgba(249,199,79,0.12); color: var(--yellow); }
+.btn-sm {
+  padding: 7px 12px; font-size: 0.8rem; border-radius: 10px;
+}
+.inv-cards-wrap { display: block; }
+
 /* Stock bar */
 .stock-bar-wrap {
   height: 6px; background: var(--surface2);
@@ -1772,7 +1811,7 @@ tr:hover td { background: var(--accent-soft); }
           <rect x="32" y="140" width="44" height="38" rx="6" fill="#d97706"/>
           <text x="54" y="168" font-family="Nunito" font-weight="900" font-size="8" fill="#7c3aed" text-anchor="middle">Fluu</text>
         </svg>
-        <div class="avatar-option-label">Repartidor</div>
+        <div class="avatar-option-label">Emprendedor</div>
       </div>
       <div class="avatar-option" data-avatar="female" onclick="seleccionarAvatar('female')">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
@@ -1785,7 +1824,7 @@ tr:hover td { background: var(--accent-soft); }
           <circle cx="111" cy="99" r="4.5" fill="#78350f"/>
           <path d="M88 112 Q100 122 112 112" stroke="#92400e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
         </svg>
-        <div class="avatar-option-label">Comerciante</div>
+        <div class="avatar-option-label">Emprendedora</div>
       </div>
     </div>
   </div>
@@ -3255,24 +3294,60 @@ var HCFG = {
 
 function histItemHTML(m, showDelete) {
   var cfg=HCFG[m.tipo]||{icon:'•',color:'#fff',bg:'rgba(255,255,255,0.06)',label:m.tipo};
-  var delBtn=showDelete?'<button data-delid="'+m.id+'" class="hist-del-btn" style="flex-shrink:0;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:8px;color:#ff4444;font-size:0.8rem;padding:5px 9px;cursor:pointer;min-height:34px;font-family:\'Manrope\',sans-serif">🗑</button>':'';
-  var editBtn=(showDelete&&(m.tipo==='venta'||m.tipo==='salida'))?'<button data-editid="'+m.id+'" class="hist-edit-btn" style="flex-shrink:0;background:rgba(91,164,245,0.1);border:1px solid rgba(91,164,245,0.3);border-radius:8px;color:#5ba4f5;font-size:0.8rem;padding:5px 9px;cursor:pointer;min-height:34px;font-family:\'Manrope\',sans-serif">✏️</button>':'';
+  var delBtn=showDelete?'<button data-delid="'+m.id+'" class="hist-del-btn" style="flex-shrink:0;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:8px;color:#ff4444;font-size:0.8rem;padding:5px 9px;cursor:pointer">🗑</button>':'';
+  var editBtn=(showDelete&&(m.tipo==='venta'||m.tipo==='salida'))?'<button data-editid="'+m.id+'" class="hist-edit-btn" style="flex-shrink:0;background:rgba(91,164,245,0.1);border:1px solid rgba(91,164,245,0.3);border-radius:8px;color:#5ba4f5;font-size:0.8rem;padding:5px 9px;cursor:pointer">✏️</button>':'';
 
-  if (m.tipo==='venta'&&m.items) {
-    var itemLines=m.items.map(function(it){return it.desglose||(it.cantidad+' '+it.prodNombre);}).join(', ');
-    var prodNames=m.items.length===1?m.items[0].prodNombre:m.items.length+' productos';
-    return '<div class="hist-item" data-mid="'+m.id+'"><div class="hist-icon" style="background:'+cfg.bg+';color:'+cfg.color+'">'+cfg.icon+'</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-weight:700;font-size:0.95rem">'+(m.cliente||'Venta')+'</span><span class="badge" style="background:'+cfg.bg+';color:'+cfg.color+';font-size:0.63rem;padding:2px 7px">'+cfg.label+'</span></div><div style="font-size:0.86rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+prodNames+' · cobrado '+fmt(m.precioTotal)+' → gan '+fmt(m.ganancia||0)+'</div><div style="font-size:0.72rem;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+itemLines+'</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;padding-left:6px;gap:4px"><div style="font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;color:var(--muted)">'+fmtDate(m.ts)+'</div><div style="display:flex;gap:4px">'+editBtn+delBtn+'</div></div></div>';
+  var timeStr = '<div style="font-size:0.72rem;color:var(--muted);white-space:nowrap">'+fmtDate(m.ts)+'</div>';
+  var actionBtns = '<div style="display:flex;gap:4px">'+editBtn+delBtn+'</div>';
+  var rightCol = '<div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;padding-left:8px;gap:4px">'+timeStr+actionBtns+'</div>';
+
+  // VENTA con múltiples items
+  if (m.tipo==='venta' && m.items) {
+    var prodLines = m.items.map(function(it){
+      return '<span style="display:inline-block;background:var(--surface2);border-radius:6px;padding:1px 6px;font-size:0.72rem;font-weight:700;margin:1px 2px 1px 0;border:1px solid var(--border)">'+
+        it.prodNombre+': '+(it.desglose||it.cantidad)+
+      '</span>';
+    }).join('');
+    return '<div class="hist-item" data-mid="'+m.id+'">'+
+      '<div class="hist-icon" style="background:'+cfg.bg+';color:'+cfg.color+'">'+cfg.icon+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'+
+          '<span style="font-weight:800;font-size:0.92rem">'+(m.cliente||'Venta')+'</span>'+
+          '<span class="badge" style="background:'+cfg.bg+';color:'+cfg.color+';font-size:0.62rem;padding:2px 7px">'+cfg.label+'</span>'+
+        '</div>'+
+        '<div style="margin-bottom:4px">'+prodLines+'</div>'+
+        '<div style="font-size:0.78rem;color:var(--muted);font-weight:600">'+
+          'Cobrado '+fmt(m.precioTotal||0)+' · Ganancia '+fmt(m.ganancia||0)+
+        '</div>'+
+      '</div>'+
+      rightCol+
+    '</div>';
   }
 
-  var cant=m.desglose?m.desglose:(m.tipo==='entrada_sobres'?m.cantidad+' sobre(s)':(m.tipoCantidad==='paquetes'?m.cantidad+' paq.':m.cantidad+' sob.'));
+  // Todos los demás tipos
   var persona=m.cliente||m.proveedor||'';
-  var fleteTxt=m.fleteAsignado?(' · flete '+fmt(m.fleteAsignado)):'';
-  return '<div class="hist-item" data-mid="'+m.id+'"><div class="hist-icon" style="background:'+cfg.bg+';color:'+cfg.color+'">'+cfg.icon+'</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-weight:700;font-size:0.95rem">'+(m.prodNombre||persona)+'</span><span class="badge" style="background:'+cfg.bg+';color:'+cfg.color+';font-size:0.63rem;padding:2px 7px">'+cfg.label+'</span></div><div style="font-size:0.86rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(persona?persona+' · ':'')+cant+(m.precioTotal?' · '+fmt(m.precioTotal)+'→ gan '+fmt(m.ganancia||0):'')+(m.inversionTotal?' · inv '+fmt(m.inversionTotal):'')+fleteTxt+(m.notas?' · '+m.notas:'')+'</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;padding-left:6px;gap:4px"><div style="font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;color:var(--muted)">'+fmtDate(m.ts)+'</div><div style="display:flex;gap:4px">'+editBtn+delBtn+'</div></div></div>';
+  var cant=m.desglose?m.desglose:(m.tipo==='entrada_sobres'?m.cantidad+' sobre(s)':(m.tipoCantidad==='paquetes'?m.cantidad+' paq.':m.cantidad+' sob.'));
+  var extras=[];
+  if (m.inversionTotal) extras.push('Inv: '+fmt(m.inversionTotal));
+  if (m.fleteAsignado)  extras.push('Flete: '+fmt(m.fleteAsignado));
+  if (m.precioTotal)    extras.push('Cobrado: '+fmt(m.precioTotal));
+  if (m.notas)          extras.push(m.notas);
+
+  return '<div class="hist-item" data-mid="'+m.id+'">'+
+    '<div class="hist-icon" style="background:'+cfg.bg+';color:'+cfg.color+'">'+cfg.icon+'</div>'+
+    '<div style="flex:1;min-width:0">'+
+      '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">'+
+        '<span style="font-weight:800;font-size:0.92rem">'+(m.prodNombre||persona||'—')+'</span>'+
+        '<span class="badge" style="background:'+cfg.bg+';color:'+cfg.color+';font-size:0.62rem;padding:2px 7px">'+cfg.label+'</span>'+
+      '</div>'+
+      (persona?'<div style="font-size:0.78rem;color:var(--muted);font-weight:700;margin-bottom:2px">'+persona+'</div>':'')+
+      '<div style="font-size:0.8rem;color:var(--text2);font-weight:700;margin-bottom:2px">'+cant+'</div>'+
+      (extras.length?'<div style="font-size:0.72rem;color:var(--muted);font-weight:600">'+extras.join(' · ')+'</div>':'')+
+    '</div>'+
+    rightCol+
+  '</div>';
 }
 
-var editandoMovId=null;
-window._editandoTipo=null;
-window._editandoId=null;
 
 function editarMovimiento(id) {
   var m = movimientos.find(function(x){ return x.id === id; });
