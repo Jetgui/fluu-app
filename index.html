@@ -719,8 +719,9 @@ select.form-input { cursor: pointer; }
 /* Prod cards (inventario móvil) */
 .prod-card {
   background: var(--surface); border-radius: 16px;
-  padding: 14px 16px; border: 1px solid var(--border);
-  box-shadow: var(--shadow); margin-bottom: 12px;
+  padding: 14px 16px 18px; border: 1px solid var(--border);
+  box-shadow: var(--shadow); margin-bottom: 16px;
+  overflow: visible;
 }
 .prod-card-top {
   display: flex; align-items: flex-start;
@@ -758,7 +759,10 @@ select.form-input { cursor: pointer; }
 /* Stock bar */
 .stock-bar-wrap {
   height: 6px; background: var(--surface2);
-  border-radius: 100px; overflow: hidden; margin: 6px 0;
+  border-radius: 100px; overflow: hidden; margin: 8px 0 4px;
+}
+.stock-bar-label {
+  font-size: 0.68rem; font-weight: 700; margin-top: 4px;
 }
 .stock-bar-fill {
   height: 100%; border-radius: 100px;
@@ -1787,11 +1791,11 @@ tr:hover td { background: var(--accent-soft); }
     <div class="card-title">🎨 Color de la aplicación</div>
     <div style="font-size:0.85rem;color:var(--text2);margin-bottom:10px;font-weight:600">Elige el color que más te guste</div>
     <div class="palette-grid">
-      <div class="palette-btn active" data-palette="purple" onclick="aplicarPaleta('purple')" style="background:#7c5cbf" title="Morado"></div>
-      <div class="palette-btn" data-palette="blue" onclick="aplicarPaleta('blue')" style="background:#3b82f6" title="Azul"></div>
-      <div class="palette-btn" data-palette="green" onclick="aplicarPaleta('green')" style="background:#10b981" title="Verde"></div>
-      <div class="palette-btn" data-palette="pink" onclick="aplicarPaleta('pink')" style="background:#ec4899" title="Rosa"></div>
-      <div class="palette-btn" data-palette="orange" onclick="aplicarPaleta('orange')" style="background:#f97316" title="Naranja"></div>
+      <div class="palette-btn active" data-palette="purple" onclick="elegirPaleta('purple')" style="background:#7c5cbf" title="Morado"></div>
+      <div class="palette-btn" data-palette="blue" onclick="elegirPaleta('blue')" style="background:#3b82f6" title="Azul"></div>
+      <div class="palette-btn" data-palette="green" onclick="elegirPaleta('green')" style="background:#10b981" title="Verde"></div>
+      <div class="palette-btn" data-palette="pink" onclick="elegirPaleta('pink')" style="background:#ec4899" title="Rosa"></div>
+      <div class="palette-btn" data-palette="orange" onclick="elegirPaleta('orange')" style="background:#f97316" title="Naranja"></div>
     </div>
   </div>
 
@@ -3293,58 +3297,48 @@ var HCFG = {
 };
 
 function histItemHTML(m, showDelete) {
-  var cfg=HCFG[m.tipo]||{icon:'•',color:'#fff',bg:'rgba(255,255,255,0.06)',label:m.tipo};
-  var delBtn=showDelete?'<button data-delid="'+m.id+'" class="hist-del-btn" style="flex-shrink:0;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:8px;color:#ff4444;font-size:0.8rem;padding:5px 9px;cursor:pointer">🗑</button>':'';
-  var editBtn=(showDelete&&(m.tipo==='venta'||m.tipo==='salida'))?'<button data-editid="'+m.id+'" class="hist-edit-btn" style="flex-shrink:0;background:rgba(91,164,245,0.1);border:1px solid rgba(91,164,245,0.3);border-radius:8px;color:#5ba4f5;font-size:0.8rem;padding:5px 9px;cursor:pointer">✏️</button>':'';
+  var cfg = HCFG[m.tipo] || {icon:'•', color:'var(--muted)', bg:'var(--surface2)', label:m.tipo};
+  var delBtn = showDelete
+    ? '<button data-delid="'+m.id+'" class="hist-del-btn" style="width:32px;height:32px;border-radius:10px;background:rgba(242,107,107,0.1);border:1px solid rgba(242,107,107,0.25);color:var(--red);font-size:0.85rem;cursor:pointer;flex-shrink:0">🗑</button>'
+    : '';
 
-  var timeStr = '<div style="font-size:0.72rem;color:var(--muted);white-space:nowrap">'+fmtDate(m.ts)+'</div>';
-  var actionBtns = '<div style="display:flex;gap:4px">'+editBtn+delBtn+'</div>';
-  var rightCol = '<div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;padding-left:8px;gap:4px">'+timeStr+actionBtns+'</div>';
+  // Línea principal: quién + qué
+  var quien = m.cliente || m.proveedor || '';
+  var que = m.prodNombre || '';
+  var titulo = quien ? quien : que;
+  if (quien && que) titulo = quien + ' · ' + que;
 
-  // VENTA con múltiples items
+  // Resumen de cantidad
+  var resumen = '';
   if (m.tipo==='venta' && m.items) {
-    var prodLines = m.items.map(function(it){
-      return '<span style="display:inline-block;background:var(--surface2);border-radius:6px;padding:1px 6px;font-size:0.72rem;font-weight:700;margin:1px 2px 1px 0;border:1px solid var(--border)">'+
-        it.prodNombre+': '+(it.desglose||it.cantidad)+
-      '</span>';
-    }).join('');
-    return '<div class="hist-item" data-mid="'+m.id+'">'+
-      '<div class="hist-icon" style="background:'+cfg.bg+';color:'+cfg.color+'">'+cfg.icon+'</div>'+
-      '<div style="flex:1;min-width:0">'+
-        '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'+
-          '<span style="font-weight:800;font-size:0.92rem">'+(m.cliente||'Venta')+'</span>'+
-          '<span class="badge" style="background:'+cfg.bg+';color:'+cfg.color+';font-size:0.62rem;padding:2px 7px">'+cfg.label+'</span>'+
-        '</div>'+
-        '<div style="margin-bottom:4px">'+prodLines+'</div>'+
-        '<div style="font-size:0.78rem;color:var(--muted);font-weight:600">'+
-          'Cobrado '+fmt(m.precioTotal||0)+' · Ganancia '+fmt(m.ganancia||0)+
-        '</div>'+
-      '</div>'+
-      rightCol+
-    '</div>';
+    resumen = m.items.length + ' producto(s)';
+  } else if (m.desglose) {
+    resumen = m.desglose;
+  } else if (m.cantidad) {
+    resumen = m.cantidad + ' ' + (m.tipoCantidad==='paquetes' ? 'paq.' : 'sob.');
   }
 
-  // Todos los demás tipos
-  var persona=m.cliente||m.proveedor||'';
-  var cant=m.desglose?m.desglose:(m.tipo==='entrada_sobres'?m.cantidad+' sobre(s)':(m.tipoCantidad==='paquetes'?m.cantidad+' paq.':m.cantidad+' sob.'));
-  var extras=[];
-  if (m.inversionTotal) extras.push('Inv: '+fmt(m.inversionTotal));
-  if (m.fleteAsignado)  extras.push('Flete: '+fmt(m.fleteAsignado));
-  if (m.precioTotal)    extras.push('Cobrado: '+fmt(m.precioTotal));
-  if (m.notas)          extras.push(m.notas);
+  // Monto si aplica
+  var monto = '';
+  if (m.precioTotal) monto = fmt(m.precioTotal);
+  else if (m.inversionTotal) monto = fmt(m.inversionTotal);
 
-  return '<div class="hist-item" data-mid="'+m.id+'">'+
-    '<div class="hist-icon" style="background:'+cfg.bg+';color:'+cfg.color+'">'+cfg.icon+'</div>'+
+  return '<div class="hist-item" data-mid="'+m.id+'" style="align-items:center;gap:12px;padding:11px 0;cursor:pointer">'+
+    '<div style="width:42px;height:42px;border-radius:13px;background:'+cfg.bg+';display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">'+cfg.icon+'</div>'+
     '<div style="flex:1;min-width:0">'+
-      '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">'+
-        '<span style="font-weight:800;font-size:0.92rem">'+(m.prodNombre||persona||'—')+'</span>'+
-        '<span class="badge" style="background:'+cfg.bg+';color:'+cfg.color+';font-size:0.62rem;padding:2px 7px">'+cfg.label+'</span>'+
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'+
+        '<span style="font-weight:800;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">'+titulo+'</span>'+
+        '<span style="flex-shrink:0;padding:2px 8px;border-radius:100px;font-size:0.62rem;font-weight:800;background:'+cfg.bg+';color:'+cfg.color+'">'+cfg.label+'</span>'+
       '</div>'+
-      (persona?'<div style="font-size:0.78rem;color:var(--muted);font-weight:700;margin-bottom:2px">'+persona+'</div>':'')+
-      '<div style="font-size:0.8rem;color:var(--text2);font-weight:700;margin-bottom:2px">'+cant+'</div>'+
-      (extras.length?'<div style="font-size:0.72rem;color:var(--muted);font-weight:600">'+extras.join(' · ')+'</div>':'')+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+        (resumen ? '<span style="font-size:0.78rem;font-weight:700;color:var(--text2)">'+resumen+'</span>' : '')+
+        (monto ? '<span style="font-size:0.78rem;font-weight:800;color:'+cfg.color+'">'+monto+'</span>' : '')+
+      '</div>'+
     '</div>'+
-    rightCol+
+    '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">'+
+      '<span style="font-size:0.68rem;font-weight:700;color:var(--muted)">'+fmtDate(m.ts)+'</span>'+
+      delBtn+
+    '</div>'+
   '</div>';
 }
 
@@ -4189,29 +4183,6 @@ window.doLogin = doLogin;
 window.doLogout = doLogout;
 window.doForgotPassword = doForgotPassword;
 
-  // Manejador de data-action para navegacion
-  document.addEventListener('click', function(e) {
-    var el = e.target;
-    while (el && el !== document) {
-      var action = el.getAttribute('data-action');
-      if (action) {
-        var arg = el.getAttribute('data-arg');
-        var fn = window[action];
-        if (typeof fn === 'function') {
-          e.preventDefault();
-          if (arg === 'true') fn(true);
-          else if (arg === 'false') fn(false);
-          else if (arg !== null && arg !== undefined) fn(arg);
-          else fn();
-        }
-        return;
-      }
-      el = el.parentElement;
-    }
-  });
-</script>
-</body>
-</html
 // ═══════════════════════════════════════════
 // PALETA Y AVATAR
 // ═══════════════════════════════════════════
@@ -4241,4 +4212,26 @@ function actualizarToggleTema() {
   if (toggle) toggle.style.background = isDark ? 'var(--accent)' : 'var(--border)';
 }
 
->
+  // Manejador de data-action para navegacion
+  document.addEventListener('click', function(e) {
+    var el = e.target;
+    while (el && el !== document) {
+      var action = el.getAttribute('data-action');
+      if (action) {
+        var arg = el.getAttribute('data-arg');
+        var fn = window[action];
+        if (typeof fn === 'function') {
+          e.preventDefault();
+          if (arg === 'true') fn(true);
+          else if (arg === 'false') fn(false);
+          else if (arg !== null && arg !== undefined) fn(arg);
+          else fn();
+        }
+        return;
+      }
+      el = el.parentElement;
+    }
+  });
+</script>
+</body>
+</html>
