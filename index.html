@@ -316,19 +316,7 @@ a { color: var(--accent); text-decoration: none; }
   transition: background 0.15s;
 }
 .topbar-btn:hover { background: var(--accent-soft); color: var(--accent); }
-#topbar-user {
-  display: flex; align-items: center; gap: 8px;
-  padding: 4px 12px 4px 4px;
-  background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 100px; cursor: pointer;
-}
-#topbar-avatar {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent-light));
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.8rem; color: #fff; font-weight: 800;
-}
-#topbar-username { font-size: 0.8rem; font-weight: 700; color: var(--text2); }
+
 
 /* ═══════════════════════════════════════
    SIDEBAR
@@ -719,8 +707,8 @@ select.form-input { cursor: pointer; }
 /* Prod cards (inventario móvil) */
 .prod-card {
   background: var(--surface); border-radius: 16px;
-  padding: 14px 16px 18px; border: 1px solid var(--border);
-  box-shadow: var(--shadow); margin-bottom: 16px;
+  padding: 14px 16px 20px; border: 1px solid var(--border);
+  box-shadow: var(--shadow); margin-bottom: 20px;
   overflow: visible;
 }
 .prod-card-top {
@@ -758,8 +746,15 @@ select.form-input { cursor: pointer; }
 
 /* Stock bar */
 .stock-bar-wrap {
+  margin-top: 10px; padding-bottom: 4px;
+}
+.stock-bar-track {
   height: 6px; background: var(--surface2);
-  border-radius: 100px; overflow: hidden; margin: 8px 0 4px;
+  border-radius: 100px; overflow: hidden; margin: 4px 0;
+}
+.stock-bar-fill {
+  height: 100%; border-radius: 100px;
+  transition: width 0.4s ease;
 }
 .stock-bar-label {
   font-size: 0.68rem; font-weight: 700; margin-top: 4px;
@@ -791,6 +786,36 @@ tr:hover td { background: var(--accent-soft); }
   padding: 10px 0; border-bottom: 1px solid var(--border);
 }
 .carrito-item:last-child { border-bottom: none; }
+
+/* Collapsible en ganancias */
+.collapse-body-gan {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.collapse-body-gan.open {
+  max-height: 2000px;
+}
+.collapse-btn {
+  width: 100%; display: flex; align-items: center;
+  justify-content: space-between; background: none; border: none;
+  cursor: pointer; font-family: inherit; padding: 0; color: var(--text);
+}
+.chevron-tag {
+  font-size: 0.75rem; font-weight: 800; color: var(--accent);
+  background: var(--accent-soft); padding: 3px 10px;
+  border-radius: 100px; flex-shrink: 0;
+}
+.collapse-btn.open .chevron-tag { content: '▲ Cerrar'; }
+.quick-range-btn {
+  padding: 6px 14px; border-radius: 100px;
+  font-size: 0.8rem; font-weight: 700; cursor: pointer;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text2); font-family: inherit; transition: all 0.15s;
+}
+.quick-range-btn.active, .quick-range-btn:hover {
+  background: var(--accent-soft); color: var(--accent);
+  border-color: var(--accent);
+}
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -1034,10 +1059,6 @@ tr:hover td { background: var(--accent-soft); }
   </div>
   <div id="topbar-right">
     <div class="topbar-btn" onclick="toggleTheme()" id="themeBtn" title="Cambiar tema">🌙</div>
-    <div id="topbar-user" onclick="goTo('configuracion')">
-      <div id="topbar-avatar">F</div>
-      <div id="topbar-username">Mi cuenta</div>
-    </div>
   </div>
 </div>
 
@@ -1567,7 +1588,7 @@ tr:hover td { background: var(--accent-soft); }
     </div>
   </div>
   <div class="card">
-    <button class="collapse-btn" id="btn-gan-det" data-action="toggleCollapse" data-arg="gan-det-body" data-arg2="btn-gan-det">
+    <button class="collapse-btn" id="btn-gan-det" onclick="toggleCollapse('gan-det-body','btn-gan-det')">
       <span style="font-size:0.92rem;font-weight:700">📦 Detalle por producto</span>
       <span class="chevron-tag">▼ Ver</span>
     </button>
@@ -1576,7 +1597,7 @@ tr:hover td { background: var(--accent-soft); }
     </div>
   </div>
   <div class="card">
-    <button class="collapse-btn" id="btn-gan-ven" data-action="toggleCollapse" data-arg="gan-ven-body" data-arg2="btn-gan-ven">
+    <button class="collapse-btn" id="btn-gan-ven" onclick="toggleCollapse('gan-ven-body','btn-gan-ven')">
       <span style="font-size:0.92rem;font-weight:700">⬆️ Ventas del período</span>
       <span class="chevron-tag">▼ Ver</span>
     </button>
@@ -2218,6 +2239,7 @@ window._arrancarConDatos = function(data) {
   gastos      = (data.gastos   || []).map(function(g){ g.monto=toNum(g.monto); g.ts=toNum(g.ts); return g; });
   prestamos   = (data.prestamos || []).map(normalizarPrestamo);
   configNegocio = data.configNegocio || { nombre: 'Fluu', paleta: 'purple', avatar: 'male' };
+  configSeguimiento = data.configSeguimiento || { diasVencidos: 7, diasPrevios: 3 };
   if (typeof actualizarNombreNegocio === 'function') actualizarNombreNegocio();
   if (configNegocio.paleta && typeof aplicarPaleta === 'function') aplicarPaleta(configNegocio.paleta);
   if (configNegocio.avatar && typeof aplicarAvatar === 'function') aplicarAvatar(configNegocio.avatar);
@@ -3663,7 +3685,10 @@ function exportarHistorial() {
 // ═══════════════════════════════════════════
 function setRango(rango, btn) {
   document.querySelectorAll('.quick-range-btn').forEach(function(b){b.classList.remove('active');});
-  if (btn) btn.classList.add('active');
+  // Marcar el botón activo por data-arg
+  var activeBtn = document.querySelector('.quick-range-btn[data-arg="'+rango+'"]');
+  if (activeBtn) activeBtn.classList.add('active');
+  else if (btn) btn.classList.add('active');
   var hoy=new Date(), desde=new Date(), hasta=new Date();
   if (rango==='hoy') { desde=new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate()); hasta=new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate(),23,59,59); }
   else if (rango==='semana') { var d=hoy.getDay(); desde=new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate()-d); hasta=new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate(),23,59,59); }
@@ -4074,8 +4099,15 @@ function eliminarFichaPrestamo(prId) {
 // UTILS
 // ═══════════════════════════════════════════
 function toggleCollapse(bodyId, btnId) {
-  document.getElementById(bodyId).classList.toggle('open');
-  document.getElementById(btnId).classList.toggle('open');
+  var body = document.getElementById(bodyId);
+  var btn  = document.getElementById(btnId);
+  if (!body) return;
+  var isOpen = body.classList.contains('open');
+  body.classList.toggle('open');
+  if (btn) btn.classList.toggle('open');
+  // Actualizar texto del chevron
+  var chev = btn ? btn.querySelector('.chevron-tag') : null;
+  if (chev) chev.textContent = isOpen ? '▼ Ver' : '▲ Cerrar';
 }
 
 
