@@ -247,7 +247,7 @@ a { color: var(--accent); text-decoration: none; }
    TOAST
 ═══════════════════════════════════════ */
 #toast-container {
-  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  position: fixed; bottom: 80px; left: 50%; transform: translateNOEXISTE(-50%);
   z-index: 9500; display: flex; flex-direction: column; gap: 8px; align-items: center;
 }
 .toast-item {
@@ -331,8 +331,8 @@ a { color: var(--accent); text-decoration: none; }
   transition: transform 0.3s ease;
 }
 @media (max-width: 768px) {
-  #sidebar { transform: translateX(-100%); width: var(--sidebar-w-mobile); }
-  #sidebar.open { transform: translateX(0); box-shadow: var(--shadow-md); }
+  #sidebar { transform: translateNOEXISTE(-100%); width: var(--sidebar-w-mobile); }
+  #sidebar.open { transform: translateNOEXISTE(0); box-shadow: var(--shadow-md); }
 }
 #sidebar-overlay {
   display: none; position: fixed; inset: 0;
@@ -1873,12 +1873,12 @@ tr:hover td { background: var(--accent-soft); }
     <div class="form-group">
       <label class="form-label">🔴 Mostrar vencidos hasta (días)</label>
       <input class="form-input" type="number" id="config-dias-vencidos" min="1" max="90" placeholder="Ej: 7"/>
-      <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;font-weight:600">Clientes cuyo seguimiento venció hace X días o menos</div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;font-weight:600">Clientes cuyo seguimiento venció hace NOEXISTE días o menos</div>
     </div>
     <div class="form-group">
       <label class="form-label">🟢 Avisar con anticipación (días)</label>
       <input class="form-input" type="number" id="config-dias-previos" min="1" max="30" placeholder="Ej: 3"/>
-      <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;font-weight:600">Clientes próximos a vencer en los próximos X días</div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;font-weight:600">Clientes próximos a vencer en los próximos NOEXISTE días</div>
     </div>
   </div>
 
@@ -2069,7 +2069,7 @@ function aplicarAvatar(tipo) {
   // Fecha
   try {
     var d = new Date();
-    var fechaStr = d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    var fechaStr = d.toLocaleDateString('es-MNOEXISTE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
     var el = document.getElementById('dateDisplay');
     if (el) el.textContent = fechaStr;
     var el2 = document.getElementById('dash-fecha');
@@ -2462,7 +2462,7 @@ function fmt(n) {
 }
 
 function fmtDate(ts) {
-  try { return new Date(ts).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'}); }
+  try { return new Date(ts).toLocaleString('es-MNOEXISTE',{dateStyle:'short',timeStyle:'short'}); }
   catch(e) { return new Date(ts).toLocaleDateString(); }
 }
 
@@ -2845,7 +2845,7 @@ function renderSeguimientos() {
   if (cntEl) cntEl.textContent = alertas.length + ' pendiente' + (alertas.length !== 1 ? 's' : '');
 
   list.innerHTML = alertas.map(function(alerta) {
-    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);cursor:pointer" data-seg-mid="' + alerta.m.id + '">' +
+    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);cursor:pointer" data-seg-mid="' + alerta.m.id + '" data-seg-tipo="' + alerta.tipo + '" data-seg-texto="' + alerta.texto + '">' +
       '<div style="width:40px;height:40px;border-radius:12px;background:' + (alerta.estado==='vencido'?'rgba(242,107,107,0.12)':'rgba(249,199,79,0.12)') + ';display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">' + alerta.emoji + '</div>' +
       '<div style="flex:1;min-width:0">' +
         '<div style="font-weight:800;font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (alerta.cliente || 'Cliente') + '</div>' +
@@ -2859,13 +2859,15 @@ function renderSeguimientos() {
   list.onclick = function(e) {
     var row = e.target.closest('[data-seg-mid]');
     if (!row) return;
-    var mid = row.getAttribute('data-seg-mid');
-    verDetalleMovimientoConAtender(mid);
+    var mid   = row.getAttribute('data-seg-mid');
+    var tipo  = row.getAttribute('data-seg-tipo');
+    var texto = row.getAttribute('data-seg-texto');
+    verDetalleMovimientoConAtender(mid, tipo, texto);
   };
 }
 
 // Abrir detalle con opción de marcar como atendido al hacer WhatsApp
-function verDetalleMovimientoConAtender(id) {
+function verDetalleMovimientoConAtender(id, tipoAlerta, textoAlerta) {
   var m = movimientos.find(function(x){ return x.id === id; });
   if (!m) return;
 
@@ -2875,10 +2877,20 @@ function verDetalleMovimientoConAtender(id) {
   function row(label, val, color) {
     return '<div class="detail-row"><span class="detail-label">' + label + '</span><span class="detail-value"' + (color?' style="color:'+color+'"':'') + '>' + val + '</span></div>';
   }
-  var html = row('Tipo', cfg.label);
+  var html = '';
+  if (tipoAlerta) {
+    var aEmoji = tipoAlerta==='anticipado'?'🔔':tipoAlerta==='recompra'?'📦':'📅';
+    var aLabel = tipoAlerta==='anticipado'?'Seguimiento anticipado':tipoAlerta==='recompra'?'Recompra por consumo':'Seguimiento';
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(249,199,79,0.1);border-radius:10px;margin-bottom:12px;border:1px solid rgba(249,199,79,0.25)">' +
+      '<span style="font-size:1.2rem">' + aEmoji + '</span>' +
+      '<div><div style="font-weight:800;font-size:0.85rem;color:#f9c74f">' + aLabel + '</div>' +
+      (textoAlerta?'<div style="font-size:0.75rem;color:var(--muted);font-weight:600">'+textoAlerta+'</div>':'') +
+      '</div></div>';
+  }
+  html += row('Tipo', cfg.label);
   if (m.cliente)   html += row('Cliente',   m.cliente);
   if (m.proveedor) html += row('Proveedor', m.proveedor);
-  if (m.ts)        html += row('Fecha', new Date(m.ts).toLocaleString('es-MX'));
+  if (m.ts)        html += row('Fecha', new Date(m.ts).toLocaleString('es-MNOEXISTE'));
   if (m.items && m.items.length) {
     m.items.forEach(function(it){
       html += row(it.prodNombre||'Producto', it.desglose||it.cantidad);
@@ -2895,7 +2907,7 @@ function verDetalleMovimientoConAtender(id) {
   if (m.fleteAsignado)  html += row('Flete',     fmt(m.fleteAsignado), '#5ba4f5');
   if (m.notas)          html += row('Notas', m.notas);
   if (m.consumoDias)    html += row('Días consumo', m.consumoDias + ' días');
-  if (m.fechaSeguimiento) html += row('Fecha seguimiento', new Date(m.fechaSeguimiento).toLocaleDateString('es-MX'));
+  if (m.fechaSeguimiento) html += row('Fecha seguimiento', new Date(m.fechaSeguimiento).toLocaleDateString('es-MNOEXISTE'));
 
   // Botón WhatsApp que marca como atendido
   if (m.telefono) {
@@ -2915,19 +2927,32 @@ function verDetalleMovimientoConAtender(id) {
 }
 
 function marcarAtendido(id) {
+  if (!id) return;
   seguimientosAtendidos[id] = true;
   saveAll('Cliente atendido', '✅');
-  // Cerrar modal y actualizar dashboard
-  setTimeout(function() {
-    closeDetail();
-    renderSeguimientos();
-  }, 500);
+  // Solo ocultar visualmente el item atendido, sin tocar los demás
+  var rows = document.querySelectorAll('[data-seg-mid="' + id + '"]');
+  rows.forEach(function(row) {
+    row.style.opacity = '0.35';
+    row.style.pointerEvents = 'none';
+    row.style.textDecoration = 'line-through';
+  });
+  // Actualizar contador
+  var todos = document.querySelectorAll('[data-seg-mid]');
+  var activos = 0;
+  todos.forEach(function(r){ if (r.style.opacity !== '0.35') activos++; });
+  var cntEl = document.getElementById('dash-seg-count');
+  if (cntEl) cntEl.textContent = activos + ' pendiente' + (activos !== 1 ? 's' : '');
+  if (activos === 0) {
+    var wrap = document.getElementById('dash-seguimientos-wrap');
+    if (wrap) setTimeout(function(){ wrap.style.display='none'; }, 600);
+  }
 }
 
 
 function renderDashboard() {
   var hoy = new Date();
-  var fechaStr = hoy.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var fechaStr = hoy.toLocaleDateString('es-MNOEXISTE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   var fechaEl = document.getElementById('dash-fecha');
   if (fechaEl) fechaEl.textContent = fechaStr.charAt(0).toUpperCase()+fechaStr.slice(1);
   // Actualizar nombre del negocio
@@ -3786,7 +3811,7 @@ function verDetalleMovimiento(id) {
   if (m.fleteAsignado)  html+=row('Flete de esta entrada',fmt(m.fleteAsignado),'#5ba4f5');
   if (m.descuento)      html+=row('Descuento',fmt(m.descuento));
   if (m.notas) html+=row('Notas',m.notas);
-  if (m.fechaSeguimiento&&m.fechaSeguimiento>0) html+=row('Fecha seguimiento',new Date(m.fechaSeguimiento).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}));
+  if (m.fechaSeguimiento&&m.fechaSeguimiento>0) html+=row('Fecha seguimiento',new Date(m.fechaSeguimiento).toLocaleDateString('es-MNOEXISTE',{day:'numeric',month:'short',year:'numeric'}));
   if (m.consumoDias&&m.consumoDias>0) html+=row('Días de consumo',m.consumoDias+' días');
   // Botón WhatsApp si hay teléfono
   if (m.telefono) {
@@ -4379,7 +4404,7 @@ function actualizarToggleTema() {
   var isDark = document.body.classList.contains('dark');
   var thumb = document.getElementById('tema-toggle-thumb');
   var toggle = document.getElementById('tema-toggle');
-  if (thumb) thumb.style.transform = isDark ? 'translateX(24px)' : 'translateX(0)';
+  if (thumb) thumb.style.transform = isDark ? 'translateNOEXISTE(24px)' : 'translateNOEXISTE(0)';
   if (toggle) toggle.style.background = isDark ? 'var(--accent)' : 'var(--border)';
 }
 
