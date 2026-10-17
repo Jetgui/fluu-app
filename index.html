@@ -1873,12 +1873,12 @@ tr:hover td { background: var(--accent-soft); }
     <div class="form-group">
       <label class="form-label">🔴 Mostrar vencidos hasta (días)</label>
       <input class="form-input" type="number" id="config-dias-vencidos" min="1" max="90" placeholder="Ej: 7"/>
-      <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;font-weight:600">Clientes cuyo seguimiento venció hace NOEXISTE días o menos</div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;font-weight:600">Clientes cuyo seguimiento venció hace  días o menos</div>
     </div>
     <div class="form-group">
       <label class="form-label">🟢 Avisar con anticipación (días)</label>
       <input class="form-input" type="number" id="config-dias-previos" min="1" max="30" placeholder="Ej: 3"/>
-      <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;font-weight:600">Clientes próximos a vencer en los próximos NOEXISTE días</div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;font-weight:600">Clientes próximos a vencer en los próximos  días</div>
     </div>
   </div>
 
@@ -2069,7 +2069,7 @@ function aplicarAvatar(tipo) {
   // Fecha
   try {
     var d = new Date();
-    var fechaStr = d.toLocaleDateString('es-MNOEXISTE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    var fechaStr = d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
     var el = document.getElementById('dateDisplay');
     if (el) el.textContent = fechaStr;
     var el2 = document.getElementById('dash-fecha');
@@ -2462,7 +2462,7 @@ function fmt(n) {
 }
 
 function fmtDate(ts) {
-  try { return new Date(ts).toLocaleString('es-MNOEXISTE',{dateStyle:'short',timeStyle:'short'}); }
+  try { return new Date(ts).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'}); }
   catch(e) { return new Date(ts).toLocaleDateString(); }
 }
 
@@ -2890,7 +2890,7 @@ function verDetalleMovimientoConAtender(id, tipoAlerta, textoAlerta) {
   html += row('Tipo', cfg.label);
   if (m.cliente)   html += row('Cliente',   m.cliente);
   if (m.proveedor) html += row('Proveedor', m.proveedor);
-  if (m.ts)        html += row('Fecha', new Date(m.ts).toLocaleString('es-MNOEXISTE'));
+  if (m.ts)        html += row('Fecha', new Date(m.ts).toLocaleString('es-MX'));
   if (m.items && m.items.length) {
     m.items.forEach(function(it){
       html += row(it.prodNombre||'Producto', it.desglose||it.cantidad);
@@ -2907,7 +2907,7 @@ function verDetalleMovimientoConAtender(id, tipoAlerta, textoAlerta) {
   if (m.fleteAsignado)  html += row('Flete',     fmt(m.fleteAsignado), '#5ba4f5');
   if (m.notas)          html += row('Notas', m.notas);
   if (m.consumoDias)    html += row('Días consumo', m.consumoDias + ' días');
-  if (m.fechaSeguimiento) html += row('Fecha seguimiento', new Date(m.fechaSeguimiento).toLocaleDateString('es-MNOEXISTE'));
+  if (m.fechaSeguimiento) html += row('Fecha seguimiento', new Date(m.fechaSeguimiento).toLocaleDateString('es-MX'));
 
   // Botón WhatsApp que marca como atendido
   if (m.telefono) {
@@ -2952,7 +2952,7 @@ function marcarAtendido(id) {
 
 function renderDashboard() {
   var hoy = new Date();
-  var fechaStr = hoy.toLocaleDateString('es-MNOEXISTE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var fechaStr = hoy.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   var fechaEl = document.getElementById('dash-fecha');
   if (fechaEl) fechaEl.textContent = fechaStr.charAt(0).toUpperCase()+fechaStr.slice(1);
   // Actualizar nombre del negocio
@@ -3775,23 +3775,7 @@ function renderHistorial() {
     }).join('');
   }
 
-  el.onclick=function(e){
-    // Borrar grupo
-    var delGrupo=e.target.closest('.hist-del-grupo');
-    if (delGrupo) {
-      var ids=delGrupo.getAttribute('data-ids').split(',');
-      showConfirm('Eliminar pedido','¿Eliminar este pedido completo ('+ids.length+' productos)? Se revertirá el stock como si nunca hubiera ocurrido.',function(){
-        movimientos=movimientos.filter(function(m){return ids.indexOf(m.id)===-1;});
-        recalcularStockDesdeMovimientos();
-        saveAll('Pedido eliminado y revertido','🗑');
-        renderHistorial(); renderDashboard(); renderInventory();
-      });
-      return;
-    }
-    var delBtn=e.target.closest('.hist-del-btn'); if(delBtn){eliminarMovimiento(delBtn.getAttribute('data-delid'));return;}
-    var editBtn=e.target.closest('.hist-edit-btn'); if(editBtn){editarMovimiento(editBtn.getAttribute('data-editid'));return;}
-    var item=e.target.closest('.hist-item[data-mid]'); if(item) verDetalleMovimiento(item.getAttribute('data-mid'));
-  };
+  // El listener está en document (permanente) - ver init
 }
 
 function verDetalleMovimiento(id) {
@@ -3811,7 +3795,7 @@ function verDetalleMovimiento(id) {
   if (m.fleteAsignado)  html+=row('Flete de esta entrada',fmt(m.fleteAsignado),'#5ba4f5');
   if (m.descuento)      html+=row('Descuento',fmt(m.descuento));
   if (m.notas) html+=row('Notas',m.notas);
-  if (m.fechaSeguimiento&&m.fechaSeguimiento>0) html+=row('Fecha seguimiento',new Date(m.fechaSeguimiento).toLocaleDateString('es-MNOEXISTE',{day:'numeric',month:'short',year:'numeric'}));
+  if (m.fechaSeguimiento&&m.fechaSeguimiento>0) html+=row('Fecha seguimiento',new Date(m.fechaSeguimiento).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}));
   if (m.consumoDias&&m.consumoDias>0) html+=row('Días de consumo',m.consumoDias+' días');
   // Botón WhatsApp si hay teléfono
   if (m.telefono) {
@@ -4414,6 +4398,44 @@ function actualizarToggleTema() {
     sOverlay.addEventListener('click', closeDrawer);
     sOverlay.addEventListener('touchend', function(e){ e.preventDefault(); closeDrawer(); });
   }
+
+  // Listener permanente del historial (no se pierde con innerHTML)
+  document.addEventListener('click', function(e) {
+    // Solo actuar si estamos en la página del historial
+    var histList = document.getElementById('historial-list');
+    if (!histList) return;
+
+    // Borrar grupo de entradas
+    var delGrupo = e.target.closest('.hist-del-grupo');
+    if (delGrupo && histList.contains(delGrupo)) {
+      var ids = delGrupo.getAttribute('data-ids').split(',');
+      showConfirm('Eliminar pedido','¿Eliminar este pedido completo (' + ids.length + ' productos)?',function(){
+        movimientos = movimientos.filter(function(m){ return ids.indexOf(m.id)===-1; });
+        recalcularStockDesdeMovimientos();
+        saveAll('Pedido eliminado','🗑');
+        renderHistorial(); renderDashboard(); renderInventory();
+      });
+      return;
+    }
+    // Borrar movimiento individual
+    var delBtn = e.target.closest('.hist-del-btn');
+    if (delBtn && histList.contains(delBtn)) {
+      eliminarMovimiento(delBtn.getAttribute('data-delid'));
+      return;
+    }
+    // Editar movimiento
+    var editBtn = e.target.closest('.hist-edit-btn');
+    if (editBtn && histList.contains(editBtn)) {
+      editarMovimiento(editBtn.getAttribute('data-editid'));
+      return;
+    }
+    // Ver detalle al tocar la tarjeta
+    var item = e.target.closest('.hist-item[data-mid]');
+    if (item && histList.contains(item)) {
+      verDetalleMovimiento(item.getAttribute('data-mid'));
+      return;
+    }
+  });
 
   // Listener para botón WhatsApp de seguimiento
   document.addEventListener('click', function(e) {
