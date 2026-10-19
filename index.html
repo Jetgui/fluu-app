@@ -2199,8 +2199,20 @@ document.addEventListener('keydown', function(e) {
 window.doLogout = function() {
   showConfirm('Cerrar sesión', '¿Estás seguro que quieres salir?', function() {
     _cargaCompleta = false;
-    if (window._doLogoutFirebase) window._doLogoutFirebase();
+    _primeraVez = true;
     productos=[]; movimientos=[]; bodegas=[]; gastos=[]; prestamos=[]; carrito=[];
+    seguimientosAtendidos={};
+    // Ocultar UI
+    var tb=document.getElementById('topbar');
+    var sb=document.getElementById('sidebar');
+    var ab=document.getElementById('app-body');
+    if(tb) tb.style.display='none';
+    if(sb) sb.style.display='none';
+    if(ab) ab.style.display='none';
+    // Hacer signOut
+    if (window._doLogoutFirebase) {
+      window._doLogoutFirebase().catch(function(e){ console.error('logout error',e); });
+    }
   });
 };
 
@@ -2474,9 +2486,16 @@ function showConfirm(title, msg, cb) {
   confirmCb = cb;
   document.getElementById('confirmModal').style.display = 'flex';
 }
-function closeConfirm() { document.getElementById('confirmModal').style.display='none'; confirmCb=null; }
+function closeConfirm() {
+  var modal = document.getElementById('confirmOverlay');
+  if (modal) { modal.classList.remove('show'); modal.style.display='none'; }
+  confirmCb = null;
+}
 function doConfirm() { var cb=confirmCb; closeConfirm(); if(cb) cb(); }
-function confirmOverlayClick(e) { if(!document.getElementById('confirmModalInner').contains(e.target)) closeConfirm(); }
+function confirmOverlayClick(e) {
+  var inner = e.currentTarget.querySelector('.confirm-card');
+  if (inner && !inner.contains(e.target)) closeConfirm();
+}
 
 // ── THEME ─────────────────────────────────
 function toggleTheme() {
